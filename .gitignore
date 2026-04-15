@@ -1,0 +1,8 @@
+# XAMPP / PHP
+/uploads/*
+!/uploads/.gitkeep
+/config/koneksi.php.local
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
