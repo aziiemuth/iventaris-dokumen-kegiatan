@@ -319,12 +319,12 @@ if ($is_search_mode) {
                                 </a>
                         <?php endif; ?>
 
-                        <?php if ($folder_id): ?>
+                        <?php if ($folder_id || $is_search_mode): ?>
                         <!-- Export button -->
-                        <a href="export_doc.php?folder=<?php echo $_GET['folder']; ?>"
+                        <a href="export_doc.php?<?php echo $is_search_mode ? 'q=' . urlencode($search) : 'folder=' . $folder_id; ?>"
                             class="btn btn-outline" style="border-color:#10b981;color:#10b981;"
-                            title="Download daftar dokumen kategori ini ke format Word (.doc)"
-                            data-tooltip="Export tabel ke Word">
+                            title="Download daftar dokumen ini ke format Word (.docx)"
+                            data-tooltip="Export tabel ke Word (.docx)">
                             <i data-feather="file-text" style="width:15px;height:15px;"></i>
                             Export ke Word
                         </a>
