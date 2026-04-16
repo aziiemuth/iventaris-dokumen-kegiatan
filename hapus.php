@@ -12,7 +12,7 @@ $user_id = $_SESSION['user_id'];
 $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
 // Security: Check ownership if not admin
-$check = mysqli_query($koneksi, "SELECT judul_dokumen, user_id FROM documents WHERE id = $id");
+$check = mysqli_query($koneksi, "SELECT judul_dokumen, user_id, folder_id FROM documents WHERE id = $id");
 $doc = mysqli_fetch_assoc($check);
 
 if (!$doc) {
@@ -43,6 +43,11 @@ audit_log('Delete', null, "Menghapus dokumen dan lampirannya: " . $doc['judul_do
 mysqli_query($koneksi, "DELETE FROM attachments WHERE document_id = $id");
 mysqli_query($koneksi, "DELETE FROM documents WHERE id = $id");
 
-header("Location: dashboard.php?msg=deleted");
+$folder_id = $doc['folder_id'];
+if (!empty($folder_id)) {
+    header("Location: dashboard.php?folder=" . $folder_id . "&msg=deleted");
+} else {
+    header("Location: dashboard.php?msg=deleted");
+}
 exit;
 ?>

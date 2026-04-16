@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS attachments (
     nama_file VARCHAR(255),
     nama_asli VARCHAR(255),
     ukuran INT,
+    keterangan TEXT,
     FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
 )";
 mysqli_query($koneksi, $query_attachments) or die(mysqli_error($koneksi));

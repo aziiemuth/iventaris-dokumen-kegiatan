@@ -34,18 +34,25 @@ if (!isset($folder_id))  $folder_id  = null;
             Upload Arsip
         </a>
 
-        <?php if ($user_role === 'admin'): ?>
         <a href="folder.php" class="sidebar-link <?php echo $active_page === 'folder' ? 'active' : ''; ?>">
             <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
-            Buat Kategori
+            Kategori
         </a>
 
+        <?php if ($user_role === 'admin'): ?>
         <div class="sidebar-label">Admin</div>
+
+        <a href="users.php" class="sidebar-link <?php echo $active_page === 'users' ? 'active' : ''; ?>">
+            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            Manajemen User
+        </a>
 
         <a href="log_aktivitas.php" class="sidebar-link <?php echo $active_page === 'log' ? 'active' : ''; ?>">
             <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             Log Aktivitas
         </a>
+
+
         <?php endif; ?>
 
         <?php

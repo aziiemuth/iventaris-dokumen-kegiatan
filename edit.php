@@ -24,16 +24,23 @@ $edit_message = "";
 if (isset($_POST['update'])) {
     $judul_dokumen = mysqli_real_escape_string($koneksi, $_POST['judul_dokumen']);
     $folder_id     = empty($_POST['folder_id']) ? "NULL" : (int)$_POST['folder_id'];
-    $keterangan    = mysqli_real_escape_string($koneksi, $_POST['keterangan']);
     $latitude      = mysqli_real_escape_string($koneksi, $_POST['latitude']);
     $longitude     = mysqli_real_escape_string($koneksi, $_POST['longitude']);
 
     $q = "UPDATE documents SET 
-          judul_dokumen='$judul_dokumen', folder_id=$folder_id, keterangan='$keterangan',
+          judul_dokumen='$judul_dokumen', folder_id=$folder_id,
           latitude='$latitude', longitude='$longitude'
           WHERE id=$id";
 
     if (mysqli_query($koneksi, $q)) {
+        if (isset($_POST['keterangan_exist']) && is_array($_POST['keterangan_exist'])) {
+            foreach ($_POST['keterangan_exist'] as $att_id => $ket_val) {
+                $att_id_safe = (int)$att_id;
+                $ket_safe = mysqli_real_escape_string($koneksi, $ket_val);
+                mysqli_query($koneksi, "UPDATE attachments SET keterangan='$ket_safe' WHERE id=$att_id_safe AND document_id=$id");
+            }
+        }
+        
         if (!empty($_FILES['files']['name'][0])) {
             $target_dir = __DIR__ . '/uploads/';
             foreach ($_FILES['files']['name'] as $key => $nama_asli) {
@@ -43,8 +50,9 @@ if (isset($_POST['update'])) {
                 $nama_bersih  = str_replace(' ', '_', $nama_asli);
                 $nama_file    = time() . '_' . rand(100,999) . '_' . $nama_bersih;
                 if (move_uploaded_file($tmp, $target_dir . $nama_file)) {
-                    mysqli_query($koneksi, "INSERT INTO attachments (document_id, nama_file, nama_asli, ukuran) 
-                                           VALUES ($id, '$nama_file', '$nama_asli', '$ukuran')");
+                    $ket_new = isset($_POST['file_keterangan'][$key]) ? mysqli_real_escape_string($koneksi, $_POST['file_keterangan'][$key]) : '';
+                    mysqli_query($koneksi, "INSERT INTO attachments (document_id, nama_file, nama_asli, ukuran, keterangan) 
+                                           VALUES ($id, '$nama_file', '$nama_asli', '$ukuran', '$ket_new')");
                 }
             }
         }
@@ -148,16 +156,7 @@ $folders_query = mysqli_query($koneksi, "SELECT * FROM folders ORDER BY nama_fol
                 </select>
             </div>
 
-            <!-- Keterangan -->
-            <div class="form-group">
-                <label for="keterangan">
-                    <i data-feather="align-left" style="width:14px;height:14px;color:var(--primary);"></i>
-                    Keterangan / Deskripsi
-                    <span class="label-hint">Opsional</span>
-                </label>
-                <textarea name="keterangan" id="keterangan" class="form-control" rows="3"
-                          placeholder="Detail kegiatan, catatan, atau keterangan tambahan..."><?php echo htmlspecialchars($doc['keterangan']); ?></textarea>
-            </div>
+            <!-- Keterangan Umum Dihapus karena Spesifik per file -->
 
             <!-- GPS -->
             <div class="form-group">
@@ -215,13 +214,16 @@ $folders_query = mysqli_query($koneksi, "SELECT * FROM folders ORDER BY nama_fol
                         $ext_a  = strtolower(pathinfo($a['nama_file'], PATHINFO_EXTENSION));
                         $is_img = in_array($ext_a, ['jpg','jpeg','png','gif','webp']);
                     ?>
-                    <div class="attachment-item" id="att-row-<?php echo $a['id']; ?>">
-                        <div style="display:flex;align-items:center;gap:0.6rem;overflow:hidden;">
+                    <div class="attachment-item" id="att-row-<?php echo $a['id']; ?>" style="align-items:flex-start;">
+                        <div style="display:flex;align-items:flex-start;gap:0.6rem;overflow:hidden;flex:1;">
                             <i data-feather="<?php echo $is_img ? 'image' : 'file'; ?>"
-                               style="width:16px;height:16px;color:var(--primary);flex-shrink:0;"></i>
-                            <span style="font-size:0.875rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                                <?php echo htmlspecialchars($a['nama_asli']); ?>
-                            </span>
+                               style="width:16px;height:16px;color:var(--primary);flex-shrink:0;margin-top:0.2rem;"></i>
+                            <div style="flex:1;">
+                                <div style="font-size:0.875rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                    <?php echo htmlspecialchars($a['nama_asli']); ?>
+                                </div>
+                                <input type="text" name="keterangan_exist[<?php echo $a['id']; ?>]" value="<?php echo htmlspecialchars($a['keterangan'] ?? ''); ?>" placeholder="Tambah/Ubah keterangan lampiran..." class="form-control" style="font-size:0.75rem; padding:0.3rem 0.5rem; height:auto; margin-top:0.3rem;" autocomplete="off">
+                            </div>
                         </div>
                         <div style="display:flex;gap:0.5rem;flex-shrink:0;">
                             <a href="file_action.php?id=<?php echo $a['id']; ?>&action=view"
@@ -370,12 +372,15 @@ function showNewFiles(input) {
     const list = document.getElementById('new-file-list');
     list.innerHTML = '';
     if (!input.files.length) return;
-    Array.from(input.files).forEach(f => {
+    Array.from(input.files).forEach((f, idx) => {
         const div = document.createElement('div');
-        div.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.35rem 0.6rem;background:white;border:1px solid var(--border-color);border-radius:6px;margin-bottom:0.3rem;font-size:0.82rem;';
-        div.innerHTML = `<i data-feather="file" style="width:12px;height:12px;color:var(--primary);flex-shrink:0;"></i>
-                         <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.name}</span>
-                         <span style="color:var(--text-light);flex-shrink:0;">${(f.size/1024).toFixed(1)} KB</span>`;
+        div.style.cssText = 'display:flex;flex-direction:column;gap:0.4rem;padding:0.5rem 0.6rem;background:white;border:1px solid var(--border-color);border-radius:6px;margin-bottom:0.4rem;font-size:0.82rem;';
+        div.innerHTML = `<div style="display:flex;align-items:center;gap:0.5rem;">
+                            <i data-feather="file" style="width:12px;height:12px;color:var(--primary);flex-shrink:0;"></i>
+                            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;">${f.name}</span>
+                            <span style="color:var(--text-light);flex-shrink:0;">${(f.size/1024).toFixed(1)} KB</span>
+                         </div>
+                         <input type="text" name="file_keterangan[]" class="form-control" style="font-size:0.75rem; padding:0.3rem 0.5rem; height:auto;" placeholder="Keterangan lampiran baru ini..." autocomplete="off">`;
         list.appendChild(div);
     });
     feather.replace();

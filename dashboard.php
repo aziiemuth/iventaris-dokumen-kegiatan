@@ -17,7 +17,7 @@ $is_search_mode = !empty($search);
 $active_folder_name = null;
 $folders_data = null;
 
-$user_filter = ($user_role === 'user') ? " AND d.user_id = " . (int) $user_id : "";
+$user_filter = ""; // Semua user bisa melihat semua dokumen (arsip publik)
 
 $limit = 10;
 $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
@@ -28,17 +28,17 @@ $total_pages = 1;
 $total_records = 0;
 
 if ($is_search_mode) {
-    $c_q = "SELECT COUNT(*) as total FROM documents d WHERE (d.judul_dokumen LIKE '%$search%' OR d.keterangan LIKE '%$search%' OR d.id IN (SELECT document_id FROM attachments WHERE nama_asli LIKE '%$search%')) $user_filter";
+    $c_q = "SELECT COUNT(*) as total FROM documents d WHERE (d.judul_dokumen LIKE '%$search%' OR d.id IN (SELECT document_id FROM attachments WHERE nama_asli LIKE '%$search%' OR keterangan LIKE '%$search%')) $user_filter";
     $c_res = mysqli_query($koneksi, $c_q);
     $total_records = mysqli_fetch_assoc($c_res)['total'];
     $total_pages = ceil($total_records / $limit);
 
-    $q = "SELECT d.*, fol.nama_folder as nama_folder_parent 
+    $q = "SELECT d.*, fol.nama_folder as nama_folder_parent, u.username as uploader_name 
           FROM documents d 
           LEFT JOIN folders fol ON d.folder_id = fol.id 
+          LEFT JOIN users u ON d.user_id = u.id 
           WHERE (d.judul_dokumen LIKE '%$search%' 
-             OR d.keterangan LIKE '%$search%' 
-             OR d.id IN (SELECT document_id FROM attachments WHERE nama_asli LIKE '%$search%'))
+             OR d.id IN (SELECT document_id FROM attachments WHERE nama_asli LIKE '%$search%' OR keterangan LIKE '%$search%'))
              $user_filter
           ORDER BY d.tanggal_upload DESC
           LIMIT $limit OFFSET $offset";
@@ -50,9 +50,10 @@ if ($is_search_mode) {
         $total_records = mysqli_fetch_assoc($c_res)['total'];
         $total_pages = ceil($total_records / $limit);
 
-        $q = "SELECT d.*, fol.nama_folder as nama_folder_parent 
+        $q = "SELECT d.*, fol.nama_folder as nama_folder_parent, u.username as uploader_name 
               FROM documents d 
               LEFT JOIN folders fol ON d.folder_id = fol.id 
+              LEFT JOIN users u ON d.user_id = u.id 
               WHERE d.folder_id = $folder_id $user_filter ORDER BY d.tanggal_upload DESC LIMIT $limit OFFSET $offset";
         $files_data = mysqli_query($koneksi, $q);
 
@@ -67,7 +68,7 @@ if ($is_search_mode) {
         $total_records = mysqli_fetch_assoc($c_res)['total'];
         $total_pages = ceil($total_records / $limit);
 
-        $q = "SELECT d.*, NULL as nama_folder_parent FROM documents d WHERE d.folder_id IS NULL $user_filter ORDER BY d.tanggal_upload DESC LIMIT $limit OFFSET $offset";
+        $q = "SELECT d.*, NULL as nama_folder_parent, u.username as uploader_name FROM documents d LEFT JOIN users u ON d.user_id = u.id WHERE d.folder_id IS NULL $user_filter ORDER BY d.tanggal_upload DESC LIMIT $limit OFFSET $offset";
         $files_data = mysqli_query($koneksi, $q);
         $folders_data = mysqli_query($koneksi, "SELECT f.*, (SELECT COUNT(id) FROM documents WHERE folder_id = f.id) as total_files FROM folders f ORDER BY f.nama_folder ASC");
     }
@@ -132,18 +133,21 @@ if ($is_search_mode) {
                 Upload Arsip
             </a>
 
+            <a href="folder.php" class="sidebar-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+                Kategori
+            </a>
+
             <?php if ($user_role === 'admin'): ?>
-                <a href="folder.php" class="sidebar-link">
+                <div class="sidebar-label">Admin</div>
+
+                <a href="users.php" class="sidebar-link">
                     <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-                        <line x1="12" y1="11" x2="12" y2="17" />
-                        <line x1="9" y1="14" x2="15" y2="14" />
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                     </svg>
-                    Buat Kategori
+                    Manajemen User
                 </a>
-
-                <div class="sidebar-label">Admin</div>
 
                 <a href="log_aktivitas.php" class="sidebar-link">
                     <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
@@ -153,14 +157,7 @@ if ($is_search_mode) {
                     Log Aktivitas
                 </a>
 
-                <a href="tools.php" class="sidebar-link">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path
-                            d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-                    </svg>
-                    Tools Data
-                </a>
+
             <?php endif; ?>
 
             <?php if ($folders_data_sidebar = mysqli_query($koneksi, "SELECT id, nama_folder FROM folders ORDER BY nama_folder ASC")): ?>
@@ -313,25 +310,25 @@ if ($is_search_mode) {
                                 Kembali
                             </a>
                         <?php else: ?>
-                            <!-- Create folder (admin only) -->
-                            <?php if ($user_role === 'admin'): ?>
+                            <!-- Create folder -->
                                 <a href="folder.php" class="btn btn-outline"
-                                    title="Buat kategori/folder baru untuk mengelompokkan dokumen"
-                                    data-tooltip="Tambah kategori dokumen baru">
-                                    <i data-feather="folder-plus" style="width:15px;height:15px;"></i>
-                                    Buat Kategori
+                                    title="Kelola Kategori / Folder Kegiatan"
+                                    data-tooltip="Kelola Kategori">
+                                    <i data-feather="folder" style="width:15px;height:15px;"></i>
+                                    Kategori
                                 </a>
-                            <?php endif; ?>
                         <?php endif; ?>
 
+                        <?php if ($folder_id): ?>
                         <!-- Export button -->
-                        <a href="export_doc.php<?php echo isset($_GET['q']) ? '?q=' . urlencode($_GET['q']) : (isset($_GET['folder']) ? '?folder=' . $_GET['folder'] : ''); ?>"
+                        <a href="export_doc.php?folder=<?php echo $_GET['folder']; ?>"
                             class="btn btn-outline" style="border-color:#10b981;color:#10b981;"
-                            title="Download daftar dokumen ini ke dalam format Word (.doc)"
+                            title="Download daftar dokumen kategori ini ke format Word (.doc)"
                             data-tooltip="Export tabel ke Word">
                             <i data-feather="file-text" style="width:15px;height:15px;"></i>
                             Export ke Word
                         </a>
+                        <?php endif; ?>
 
                         <!-- Upload button (all roles) -->
                         <a href="upload.php<?php echo $folder_id ? '?folder=' . $folder_id : ''; ?>"
@@ -425,13 +422,16 @@ if ($is_search_mode) {
                                                 <?php echo htmlspecialchars($judul); ?>
                                             </div>
                                             <div
-                                                style="font-size:0.82rem;color:var(--text-muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:0.3rem;">
+                                                style="font-size:0.82rem;color:var(--text-muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:0.3rem; display:none;">
                                                 <?php echo htmlspecialchars($keterangan); ?>
                                             </div>
                                             <div
                                                 style="font-size:0.75rem;color:var(--text-light);display:flex;align-items:center;gap:0.3rem;">
                                                 <i data-feather="clock" style="width:11px;height:11px;"></i>
                                                 <?php echo $tanggal; ?>
+                                                <span style="color:var(--border);">|</span>
+                                                <i data-feather="user" style="width:11px;height:11px;"></i>
+                                                <?php echo htmlspecialchars($d['uploader_name'] ?? 'Unknown'); ?>
                                             </div>
                                         </td>
 
@@ -483,14 +483,20 @@ if ($is_search_mode) {
                                                                     style="width:100%;height:100%;object-fit:cover;" alt="Preview">
                                                             </div>
                                                         <?php endif; ?>
-                                                        <div style="display:flex;align-items:center;gap:0.4rem;margin-bottom:0.35rem;">
+                                                        <div style="display:flex;align-items:flex-start;gap:0.4rem;margin-bottom:0.35rem;">
                                                             <i data-feather="<?php echo $is_img ? 'image' : 'file-text'; ?>"
-                                                                style="width:12px;height:12px;color:var(--primary);flex-shrink:0;"></i>
-                                                            <span
-                                                                style="font-size:0.78rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px;"
-                                                                title="<?php echo htmlspecialchars($att['nama_asli']); ?>">
-                                                                <?php echo htmlspecialchars(strlen($att['nama_asli']) > 18 ? substr($att['nama_asli'], 0, 16) . '…' : $att['nama_asli']); ?>
-                                                            </span>
+                                                                style="width:12px;height:12px;color:var(--primary);flex-shrink:0;margin-top:0.2rem;"></i>
+                                                            <div style="flex:1; overflow:hidden;">
+                                                                <div style="font-size:0.78rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px;"
+                                                                    title="<?php echo htmlspecialchars($att['nama_asli']); ?>">
+                                                                    <?php echo htmlspecialchars(strlen($att['nama_asli']) > 18 ? substr($att['nama_asli'], 0, 16) . '…' : $att['nama_asli']); ?>
+                                                                </div>
+                                                                <?php if (!empty($att['keterangan'])): ?>
+                                                                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.2rem; line-height:1.2;">
+                                                                    <?php echo htmlspecialchars($att['keterangan']); ?>
+                                                                </div>
+                                                                <?php endif; ?>
+                                                            </div>
                                                         </div>
                                                         <div style="display:flex;justify-content:space-between;align-items:center;">
                                                             <span
@@ -557,7 +563,7 @@ if ($is_search_mode) {
                 <?php if (!$is_search_mode && !$folder_id): ?>
                     <?php
                     // Re-query since pointer has been used for folder count already
-                    $q2 = "SELECT d.*, NULL as nama_folder_parent FROM documents d WHERE d.folder_id IS NULL $user_filter ORDER BY d.tanggal_upload DESC LIMIT $limit OFFSET $offset";
+                    $q2 = "SELECT d.*, NULL as nama_folder_parent, u.username as uploader_name FROM documents d LEFT JOIN users u ON d.user_id = u.id WHERE d.folder_id IS NULL $user_filter ORDER BY d.tanggal_upload DESC LIMIT $limit OFFSET $offset";
                     $root_files = mysqli_query($koneksi, $q2);
                     if (mysqli_num_rows($root_files) === 0):
                         ?>
@@ -594,13 +600,15 @@ if ($is_search_mode) {
                                                     <?php echo htmlspecialchars($judul); ?>
                                                 </div>
                                                 <div
-                                                    style="font-size:0.82rem;color:var(--text-muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:0.3rem;">
+                                                    style="font-size:0.82rem;color:var(--text-muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:0.3rem; display:none;">
                                                     <?php echo htmlspecialchars($keterangan); ?>
                                                 </div>
                                                 <div
                                                     style="font-size:0.75rem;color:var(--text-light);display:flex;align-items:center;gap:0.3rem;">
-                                                    <i data-feather="clock"
-                                                        style="width:11px;height:11px;"></i><?php echo $tanggal; ?>
+                                                    <i data-feather="clock" style="width:11px;height:11px;"></i><?php echo $tanggal; ?>
+                                                    <span style="color:var(--border);">|</span>
+                                                    <i data-feather="user" style="width:11px;height:11px;"></i>
+                                                    <?php echo htmlspecialchars($d['uploader_name'] ?? 'Unknown'); ?>
                                                 </div>
                                             </td>
                                             <td style="vertical-align:top;">
@@ -633,14 +641,20 @@ if ($is_search_mode) {
                                                                         style="width:100%;height:100%;object-fit:cover;" alt="Preview">
                                                                 </div>
                                                             <?php endif; ?>
-                                                            <div style="display:flex;align-items:center;gap:0.4rem;margin-bottom:0.3rem;">
+                                                            <div style="display:flex;align-items:flex-start;gap:0.4rem;margin-bottom:0.3rem;">
                                                                 <i data-feather="<?php echo $is_img ? 'image' : 'file-text'; ?>"
-                                                                    style="width:11px;height:11px;color:var(--primary);"></i>
-                                                                <span
-                                                                    style="font-size:0.77rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;"
-                                                                    title="<?php echo htmlspecialchars($att['nama_asli']); ?>">
-                                                                    <?php echo htmlspecialchars(strlen($att['nama_asli']) > 16 ? substr($att['nama_asli'], 0, 14) . '…' : $att['nama_asli']); ?>
-                                                                </span>
+                                                                    style="width:11px;height:11px;color:var(--primary);margin-top:0.2rem;"></i>
+                                                                <div style="flex:1; overflow:hidden;">
+                                                                    <div style="font-size:0.77rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;"
+                                                                        title="<?php echo htmlspecialchars($att['nama_asli']); ?>">
+                                                                        <?php echo htmlspecialchars(strlen($att['nama_asli']) > 16 ? substr($att['nama_asli'], 0, 14) . '…' : $att['nama_asli']); ?>
+                                                                    </div>
+                                                                    <?php if (!empty($att['keterangan'])): ?>
+                                                                    <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.2rem; line-height:1.2;">
+                                                                        <?php echo htmlspecialchars($att['keterangan']); ?>
+                                                                    </div>
+                                                                    <?php endif; ?>
+                                                                </div>
                                                             </div>
                                                             <div style="display:flex;justify-content:space-between;align-items:center;">
                                                                 <span

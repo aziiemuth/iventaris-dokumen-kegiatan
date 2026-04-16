@@ -13,13 +13,13 @@ $folders_query  = mysqli_query($koneksi, "SELECT * FROM folders ORDER BY nama_fo
 if (isset($_POST['upload'])) {
     $judul_dokumen = mysqli_real_escape_string($koneksi, $_POST['judul_dokumen']);
     $folder_id     = empty($_POST['folder_id']) ? "NULL" : (int)$_POST['folder_id'];
-    $keterangan    = mysqli_real_escape_string($koneksi, $_POST['keterangan']);
+    // Keterangan ditiadakan di level dokumen, hanya ada di level attachment per-file
     $tanggal       = mysqli_real_escape_string($koneksi, $_POST['tanggal']);
     $latitude      = mysqli_real_escape_string($koneksi, $_POST['latitude']);
     $longitude     = mysqli_real_escape_string($koneksi, $_POST['longitude']);
 
-    $query_doc = "INSERT INTO documents (judul_dokumen, folder_id, keterangan, tanggal_upload, user_id, latitude, longitude) 
-                  VALUES ('$judul_dokumen', $folder_id, '$keterangan', '$tanggal', {$_SESSION['user_id']}, '$latitude', '$longitude')";
+    $query_doc = "INSERT INTO documents (judul_dokumen, folder_id, tanggal_upload, user_id, latitude, longitude) 
+                  VALUES ('$judul_dokumen', $folder_id, '$tanggal', {$_SESSION['user_id']}, '$latitude', '$longitude')";
 
     if (mysqli_query($koneksi, $query_doc)) {
         $document_id = mysqli_insert_id($koneksi);
@@ -34,8 +34,9 @@ if (isset($_POST['upload'])) {
                 $nama_asli_bersih = str_replace(' ', '_', $nama_asli);
                 $nama_file        = time() . '_' . rand(100, 999) . '_' . $nama_asli_bersih;
                 if (move_uploaded_file($tmp, $target_dir . $nama_file)) {
-                    $q_att = "INSERT INTO attachments (document_id, nama_file, nama_asli, ukuran) 
-                              VALUES ($document_id, '$nama_file', '$nama_asli', '$ukuran')";
+                    $ket_file = isset($_POST['file_keterangan'][$key]) ? mysqli_real_escape_string($koneksi, $_POST['file_keterangan'][$key]) : '';
+                    $q_att = "INSERT INTO attachments (document_id, nama_file, nama_asli, ukuran, keterangan) 
+                              VALUES ($document_id, '$nama_file', '$nama_asli', '$ukuran', '$ket_file')";
                     mysqli_query($koneksi, $q_att);
                     $berhasil_upload++;
                 }
@@ -152,16 +153,7 @@ $prefill_folder = isset($_GET['folder']) ? (int)$_GET['folder'] : "";
                 <input type="datetime-local" name="tanggal" id="tanggal" class="form-control" required>
             </div>
 
-            <!-- Keterangan -->
-            <div class="form-group">
-                <label for="keterangan">
-                    <i data-feather="align-left" style="width:14px;height:14px;color:var(--primary);"></i>
-                    Keterangan / Deskripsi
-                    <span class="label-hint">Opsional</span>
-                </label>
-                <textarea name="keterangan" id="keterangan" class="form-control" rows="3"
-                          placeholder="Jelaskan isi, tujuan, atau catatan penting dari arsip ini..."></textarea>
-            </div>
+            <!-- Keterangan Utama Dihapus karena diganti ke keterangan spesifik per file -->
 
             <!-- GPS Coordinates -->
             <div class="form-group">
@@ -376,6 +368,11 @@ function showError(err) {
 
 /* File preview & Accumulation */
 let accumulatedFiles = new DataTransfer();
+let fileDescriptions = [];
+
+function updateDesc(index, val) {
+    fileDescriptions[index] = val;
+}
 
 function handleFilesAdded(files) {
     const fileInput = document.getElementById('file');
@@ -392,6 +389,7 @@ function handleFilesAdded(files) {
         }
         if (!isDuplicate) {
             accumulatedFiles.items.add(files[i]);
+            fileDescriptions.push("");
         }
     }
     
@@ -409,6 +407,7 @@ function removeFile(index) {
             dt.items.add(accumulatedFiles.files[i]);
         }
     }
+    fileDescriptions.splice(index, 1);
     accumulatedFiles = dt;
     document.getElementById('file').files = accumulatedFiles.files;
     renderAccumulatedFiles();
@@ -433,7 +432,7 @@ function renderAccumulatedFiles() {
             else { size = size + ' B'; }
             
             let itemDiv = document.createElement('div');
-            itemDiv.style.cssText = "width:100px; padding:0.5rem; background:rgba(255,255,255,0.05); border:1px solid var(--border-color); border-radius:var(--radius-md); text-align:center; position:relative; display:flex; flex-direction:column; align-items:center;";
+            itemDiv.style.cssText = "width:130px; padding:0.5rem; background:rgba(255,255,255,0.05); border:1px solid var(--border-color); border-radius:var(--radius-md); text-align:center; position:relative; display:flex; flex-direction:column; align-items:center;";
 
             // Tombol X untuk hapus
             let removeBtn = document.createElement('button');
@@ -469,11 +468,18 @@ function renderAccumulatedFiles() {
 
             // Nama & ukuran (dipotong kalau panjang)
             let textDiv = document.createElement('div');
-            let shortName = name.length > 12 ? name.substring(0, 10) + "…" : name;
+            let shortName = name.length > 15 ? name.substring(0, 13) + "…" : name;
             textDiv.innerHTML = `<div style="font-size:0.7rem; font-weight:600; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${name}">${shortName}</div>
-                                 <div style="font-size:0.65rem; color:var(--text-light);">${size}</div>`;
-            
+                                 <div style="font-size:0.65rem; color:var(--text-light); margin-bottom: 0.3rem;">${size}</div>`;
             itemDiv.appendChild(textDiv);
+            
+            // Input Keterangan spesifik
+            let ketValue = (fileDescriptions[i] || '').replace(/"/g, '&quot;');
+            let ketDiv = document.createElement('div');
+            ketDiv.style.cssText = "width:100%; margin-top:auto;";
+            ketDiv.innerHTML = `<input type="text" name="file_keterangan[]" class="form-control" style="font-size:0.7rem; padding:0.3rem 0.5rem; height:auto; text-align:center;" placeholder="Keterangan..." value="${ketValue}" oninput="updateDesc(${i}, this.value)" autocomplete="off">`;
+            itemDiv.appendChild(ketDiv);
+            
             list.appendChild(itemDiv);
         }
         feather.replace();

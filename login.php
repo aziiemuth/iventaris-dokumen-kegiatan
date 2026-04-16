@@ -337,19 +337,7 @@ if (!$redirect_to_dashboard && isset($_POST['login'])) {
                 </button>
             </form>
 
-            <div class="demo-accounts">
-                <p>Isi Cepat Akun Demo</p>
-                <div class="demo-row">
-                    <button class="demo-btn" onclick="fillDemo('admin','admin')">
-                        👑 Admin
-                        <span>Full Access</span>
-                    </button>
-                    <button class="demo-btn" onclick="fillDemo('user','user')">
-                        👤 User
-                        <span>Limited Access</span>
-                    </button>
-                </div>
-            </div>
+
         </div>
     </div>
 </div>
@@ -357,11 +345,7 @@ if (!$redirect_to_dashboard && isset($_POST['login'])) {
 <script>
     feather.replace();
 
-    function fillDemo(u, p) {
-        document.getElementById('username').value = u;
-        document.getElementById('password').value = p;
-        document.getElementById('password').focus();
-    }
+
 
     // Submit button loading state — gunakan setTimeout agar tidak block form POST
     document.getElementById('login-form').addEventListener('submit', function(e) {

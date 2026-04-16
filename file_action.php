@@ -77,8 +77,8 @@ $query = mysqli_query($koneksi, "
 ");
 $file = mysqli_fetch_assoc($query);
 
-if (!$file || ($user_role === 'user' && $file['user_id'] != $user_id)) {
-    die("File tidak ditemukan atau Anda tidak memiliki akses.");
+if (!$file) {
+    die("File tidak ditemukan.");
 }
 
 $file_path = __DIR__ . '/uploads/' . $file['nama_file'];
@@ -98,6 +98,36 @@ $finfo = finfo_open(FILEINFO_MIME_TYPE);
 $mime_type = finfo_file($finfo, $file_path);
 finfo_close($finfo);
 
+function get_address($lat, $lng) {
+    if (empty($lat) || empty($lng)) return "Tidak diketahui";
+    $url = "https://nominatim.openstreetmap.org/reverse?format=json&lat={$lat}&lon={$lng}&zoom=18&addressdetails=1";
+    $options = [
+        "http" => [
+            "header" => "User-Agent: InventarisDokumenApp/1.0\r\n",
+            "timeout" => 3
+        ]
+    ];
+    $context = stream_context_create($options);
+    $response = @file_get_contents($url, false, $context);
+    if ($response) {
+        $data = json_decode($response, true);
+        if (!empty($data['display_name'])) {
+            $parts = explode(', ', $data['display_name']);
+            return implode(', ', array_slice($parts, 0, min(3, count($parts))));
+        }
+    }
+    return "$lat, $lng"; // fallback
+}
+
+$alamat_lokasi = "Tidak diketahui";
+$safe_lokasi = "";
+if ($action === 'Download') {
+    $alamat_lokasi = get_address($file['latitude'], $file['longitude']);
+    $safe_lokasi = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $alamat_lokasi);
+    $safe_lokasi = trim(preg_replace('/_+/', '_', $safe_lokasi), '_');
+    $safe_lokasi = substr($safe_lokasi, 0, 60);
+}
+
 // Intercept for Watermarking Images if action is Download
 if ($action === 'Download' && strpos($mime_type, 'image/') === 0 && function_exists('imagecreatefromjpeg')) {
     $img = null;
@@ -112,7 +142,7 @@ if ($action === 'Download' && strpos($mime_type, 'image/') === 0 && function_exi
         $height = imagesy($img);
         
         $tanggal_wm = "Tanggal: " . ($file['tanggal_upload'] ? date('d-m-Y H:i', strtotime($file['tanggal_upload'])) : '-');
-        $lokasi_wm  = "Lokasi: " . (!empty($file['latitude']) ? $file['latitude'] . ", " . $file['longitude'] : 'Tidak diketahui');
+        $lokasi_wm  = "Lokasi: " . $alamat_lokasi;
         $text1 = "Inventaris Dokumen Kegiatan";
         $text2 = "$tanggal_wm | $lokasi_wm";
         
@@ -152,7 +182,7 @@ if ($action === 'Download' && strpos($mime_type, 'image/') === 0 && function_exi
         
         // Output file langsung
         header('Content-Type: ' . $mime_type);
-        header('Content-Disposition: attachment; filename="Watermarked_' . basename($file['nama_asli']) . '"');
+        header('Content-Disposition: attachment; filename="' . basename($file['nama_asli']) . '"');
         ob_clean();
         flush();
         

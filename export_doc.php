@@ -12,15 +12,14 @@ $search    = isset($_GET['q']) ? mysqli_real_escape_string($koneksi, trim($_GET[
 $folder_id = isset($_GET['folder']) ? (int) $_GET['folder'] : null;
 
 $is_search_mode = !empty($search);
-$user_filter = ($user_role === 'user') ? " AND d.user_id = " . (int)$user_id : "";
+$user_filter = ""; // Semua user bisa mengekspor semua dokumen (arsip publik)
 
 if ($is_search_mode) {
     $q = "SELECT d.*, fol.nama_folder as nama_folder_parent 
           FROM documents d 
           LEFT JOIN folders fol ON d.folder_id = fol.id 
           WHERE (d.judul_dokumen LIKE '%$search%' 
-             OR d.keterangan LIKE '%$search%' 
-             OR d.id IN (SELECT document_id FROM attachments WHERE nama_asli LIKE '%$search%'))
+             OR d.id IN (SELECT document_id FROM attachments WHERE nama_asli LIKE '%$search%' OR keterangan LIKE '%$search%'))
              $user_filter
           ORDER BY d.tanggal_upload DESC";
     $title = "Laporan Pencarian: " . $search;
@@ -40,33 +39,43 @@ if ($is_search_mode) {
 }
 $files_data = mysqli_query($koneksi, $q);
 
-header("Content-Type: application/vnd.ms-word");
+header("Content-Type: application/vnd.ms-word; charset=utf-8");
 header("Cache-Control: no-cache, must-revalidate");
 header("Content-Disposition: attachment; filename=\"Laporan_Dokumen_".date('Ymd_His').".doc\"");
 
-echo "<html>";
+// Word membutuhkan URL absolute untuk gambar, bukan base64
+$protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
+$base_url = $protocol . $_SERVER['HTTP_HOST'] . rtrim(dirname($_SERVER['PHP_SELF']), '/\\') . '/';
+
+echo "\xEF\xBB\xBF"; // UTF-8 BOM
+echo "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>";
 echo "<head><meta charset='UTF-8'><title>Laporan Dokumen</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->
 <style>
-    body { font-family: Arial, sans-serif; font-size: 11pt; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed; word-wrap: break-word; }
-    th, td { border: 1px solid #000; padding: 8px; text-align: left; vertical-align: top; overflow-wrap: break-word; }
-    th { background-color: #f2f2f2; font-weight: bold; }
-    h2 { text-align: center; font-size: 16pt; margin-bottom: 20px; }
+    body { font-family: 'Arial', sans-serif; font-size: 11pt; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #000000; padding: 10px; text-align: left; vertical-align: top; }
+    th { background-color: #e0e0e0; font-weight: bold; text-align: center; }
+    td { vertical-align: middle; }
+    h2 { text-align: center; font-size: 16pt; margin-bottom: 10px; color: #333333; }
+    .text-center { text-align: center; }
+    .meta-teks { font-size: 10pt; color: #555; }
 </style>
 </head>";
 echo "<body>";
 echo "<h2>" . htmlspecialchars($title) . "</h2>";
-echo "<p>Dicetak pada: " . date("d M Y H:i") . "</p>";
+echo "<p class='text-center meta-teks'>Dicetak pada: " . date("d M Y H:i") . "</p>";
 
-echo "<table>";
+echo "<table border='1' cellpadding='10' cellspacing='0' width='100%'>";
+echo "<thead>";
 echo "<tr>
-        <th width='5%'>No</th>
-        <th width='15%'>Judul Dokumen</th>
-        <th width='20%'>Keterangan</th>
-        <th width='12%'>Tanggal</th>
-        <th width='13%'>Kategori / Lokasi</th>
+        <th width='5%' style='text-align:center;'>No</th>
+        <th width='25%'>Judul Dokumen</th>
+        <th width='15%' style='text-align:center;'>Tanggal</th>
+        <th width='20%'>Kategori / Lokasi</th>
         <th width='35%'>File Terlampir</th>
       </tr>";
+echo "</thead><tbody>";
 
 if (mysqli_num_rows($files_data) > 0) {
     $no = 1;
@@ -74,21 +83,19 @@ if (mysqli_num_rows($files_data) > 0) {
         
         // Cari attachments
         $doc_id = $d['id'];
-        $q_atts = mysqli_query($koneksi, "SELECT nama_asli, nama_file FROM attachments WHERE document_id = $doc_id");
+        $q_atts = mysqli_query($koneksi, "SELECT nama_asli, nama_file, keterangan FROM attachments WHERE document_id = $doc_id");
         $attachments = [];
         while ($a = mysqli_fetch_assoc($q_atts)) {
             $ext = strtolower(pathinfo($a['nama_file'], PATHINFO_EXTENSION));
             $is_img = in_array($ext, ['jpg','jpeg','png','gif','webp','jfif']);
             
-            $text = "- " . htmlspecialchars($a['nama_asli']);
+            $text = "- <b>" . htmlspecialchars($a['nama_asli']) . "</b>";
+            if (!empty($a['keterangan'])) {
+                $text .= "<br>&nbsp; <i>" . htmlspecialchars($a['keterangan']) . "</i>";
+            }
             if ($is_img) {
                 $file_path = __DIR__ . '/uploads/' . $a['nama_file'];
                 if (file_exists($file_path)) {
-                    $img_data = base64_encode(file_get_contents($file_path));
-                    $mime = ($ext === 'jpg' || $ext === 'jfif') ? 'jpeg' : $ext;
-                    
-                    // MS Word membutuhkan width DAN height terdefinisi pasti
-                    // agar tidak menggunakan 'tinggi asli' file secara tidak sengaja
                     $size_info = @getimagesize($file_path);
                     $new_w = 110;
                     $new_h = 110;
@@ -98,7 +105,7 @@ if (mysqli_num_rows($files_data) > 0) {
                         $new_h = intval(($orig_h / $orig_w) * $new_w);
                     }
 
-                    $src = 'data:image/' . $mime . ';base64,' . $img_data;
+                    $src = $base_url . 'uploads/' . rawurlencode($a['nama_file']);
                     $text .= "<br><img src='$src' width='$new_w' height='$new_h' style='border:1px solid #aaa;'><br>";
                 }
             }
@@ -120,15 +127,14 @@ if (mysqli_num_rows($files_data) > 0) {
         echo "<tr>";
         echo "<td>" . $no++ . "</td>";
         echo "<td><b>" . htmlspecialchars(!empty($d['judul_dokumen']) ? $d['judul_dokumen'] : 'Tanpa Judul') . "</b></td>";
-        echo "<td>" . htmlspecialchars(!empty($d['keterangan']) ? $d['keterangan'] : '-') . "</td>";
         echo "<td>" . (!empty($d['tanggal_upload']) ? date('d M Y H:i', strtotime($d['tanggal_upload'])) : '-') . "</td>";
         echo "<td>Kategori: " . $kategori . $lokasi . "</td>";
         echo "<td>" . $file_list . "</td>";
         echo "</tr>";
     }
 } else {
-    echo "<tr><td colspan='6' style='text-align:center;'>Pencarian / Kategori ini tidak memiliki dokumen.</td></tr>";
+    echo "<tr><td colspan='5' style='text-align:center;'>Pencarian / Kategori ini tidak memiliki dokumen.</td></tr>";
 }
-echo "</table>";
+echo "</tbody></table>";
 echo "</body></html>";
 ?>
