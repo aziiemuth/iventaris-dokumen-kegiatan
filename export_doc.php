@@ -18,7 +18,7 @@ $is_search_mode = !empty($search);
 $user_filter = "";
 
 if ($is_search_mode) {
-    $q = "SELECT d.*, fol.nama_folder as nama_folder_parent
+    $q = "SELECT d.*, d.keterangan as dok_keterangan, fol.nama_folder as nama_folder_parent
           FROM documents d
           LEFT JOIN folders fol ON d.folder_id = fol.id
           WHERE (d.judul_dokumen LIKE '%$search%'
@@ -114,18 +114,20 @@ if (mysqli_num_rows($files_data) > 0) {
         $lok = (!empty($d['latitude']) && !empty($d['longitude'])) ? " (Lat: {$d['latitude']}, Lng: {$d['longitude']})" : '';
         $tgl = (!empty($d['tanggal_upload']) ? date('d M Y H:i', strtotime($d['tanggal_upload'])) : '-');
         $judul = htmlspecialchars(!empty($d['judul_dokumen']) ? $d['judul_dokumen'] : 'Tanpa Judul', ENT_XML1, 'UTF-8');
+        $dok_ket = htmlspecialchars(!empty($d['keterangan']) ? $d['keterangan'] : '-', ENT_XML1, 'UTF-8');
 
         $rows_xml .= '
         <w:tr w:rsidR="00000000">
             <w:tc><w:tcPr><w:tcW w:w="700" w:type="dxa"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>' . $no++ . '</w:t></w:r></w:p></w:tc>
-            <w:tc><w:tcPr><w:tcW w:w="3000" w:type="dxa"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>' . $judul . '</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2400" w:type="dxa"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>' . $judul . '</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1200" w:type="dxa"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>' . $dok_ket . '</w:t></w:r></w:p></w:tc>
             <w:tc><w:tcPr><w:tcW w:w="2000" w:type="dxa"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>' . $tgl . '</w:t></w:r></w:p></w:tc>
             <w:tc><w:tcPr><w:tcW w:w="2000" w:type="dxa"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>' . htmlspecialchars($kat . $lok, ENT_XML1, 'UTF-8') . '</w:t></w:r></w:p></w:tc>
-            <w:tc><w:tcPr><w:tcW w:w="3300" w:type="dxa"/></w:tcPr>' . $att_xml . '</w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2700" w:type="dxa"/></w:tcPr>' . $att_xml . '</w:tc>
         </w:tr>';
     }
 } else {
-    $rows_xml .= '<w:tr w:rsidR="00000000"><w:tc><w:tcPr><w:tcW w:w="11000" w:type="dxa"/><w:gridSpan w:val="5"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>Tidak ada dokumen.</w:t></w:r></w:p></w:tc></w:tr>';
+    $rows_xml .= '<w:tr w:rsidR="00000000"><w:tc><w:tcPr><w:tcW w:w="11000" w:type="dxa"/><w:gridSpan w:val="6"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>Tidak ada dokumen.</w:t></w:r></w:p></w:tc></w:tr>';
 }
 
 // --- Build document.xml ---
@@ -172,17 +174,19 @@ $document_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         </w:tblPr>
         <w:tblGrid>
             <w:gridCol w:w="700"/>
-            <w:gridCol w:w="3000"/>
+            <w:gridCol w:w="2400"/>
+            <w:gridCol w:w="1200"/>
             <w:gridCol w:w="2000"/>
             <w:gridCol w:w="2000"/>
-            <w:gridCol w:w="3300"/>
+            <w:gridCol w:w="2700"/>
         </w:tblGrid>
         <w:tr w:rsidR="00000000">
             <w:tc><w:tcPr><w:tcW w:w="700" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>No</w:t></w:r></w:p></w:tc>
-            <w:tc><w:tcPr><w:tcW w:w="3000" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>Judul Dokumen</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2400" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>Judul Dokumen</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="1200" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>Keterangan</w:t></w:r></w:p></w:tc>
             <w:tc><w:tcPr><w:tcW w:w="2000" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>Tanggal</w:t></w:r></w:p></w:tc>
             <w:tc><w:tcPr><w:tcW w:w="2000" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>Kategori</w:t></w:r></w:p></w:tc>
-            <w:tc><w:tcPr><w:tcW w:w="3300" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>File Terlampir</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2700" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>File Terlampir</w:t></w:r></w:p></w:tc>
         </w:tr>
         ' . $rows_xml . '
     </w:tbl>
