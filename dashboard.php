@@ -320,6 +320,15 @@ if ($is_search_mode) {
                         <?php endif; ?>
 
                         <?php if ($folder_id || $is_search_mode): ?>
+                        <!-- Export ZIP button -->
+                        <a href="export_zip.php?<?php echo $is_search_mode ? 'q=' . urlencode($search) : 'folder=' . $folder_id; ?>"
+                            class="btn btn-outline" style="border-color:#3b82f6;color:#3b82f6;"
+                            title="Download hanya file foto ke dalam format ZIP"
+                            data-tooltip="Export Foto ke ZIP">
+                            <i data-feather="archive" style="width:15px;height:15px;"></i>
+                            Export Foto (ZIP)
+                        </a>
+
                         <!-- Export button -->
                         <a href="export_doc.php?<?php echo $is_search_mode ? 'q=' . urlencode($search) : 'folder=' . $folder_id; ?>"
                             class="btn btn-outline" style="border-color:#10b981;color:#10b981;"
