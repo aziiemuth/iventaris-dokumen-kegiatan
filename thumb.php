@@ -7,24 +7,43 @@ if (!isset($_GET['file'])) {
 }
 
 $file = basename($_GET['file']);
-$path = __DIR__ . '/uploads/' . $file;
-$thumb_dir = __DIR__ . '/uploads/thumbs/';
-$thumb_path = $thumb_dir . $file;
+$uploads_dir = __DIR__ . DIRECTORY_SEPARATOR . 'uploads';
+$path = $uploads_dir . DIRECTORY_SEPARATOR . $file;
+$thumb_dir = $uploads_dir . DIRECTORY_SEPARATOR . 'thumbs';
+$thumb_path = $thumb_dir . DIRECTORY_SEPARATOR . $file;
 
 if (!file_exists($path)) {
     header("HTTP/1.0 404 Not Found");
     exit;
 }
 
+// Fungsi untuk mengirim file asli sebagai fallback
+function send_original($file_path)
+{
+    $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
+    $mimes = [
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp'
+    ];
+    $mime = isset($mimes[$ext]) ? $mimes[$ext] : 'application/octet-stream';
+
+    header("Content-Type: " . $mime);
+    header("Content-Length: " . filesize($file_path));
+    header("Cache-Control: public, max-age=86400");
+    readfile($file_path);
+    exit;
+}
+
 if (!is_dir($thumb_dir)) {
-    mkdir($thumb_dir, 0777, true);
+    @mkdir($thumb_dir, 0777, true);
 }
 
 // Jika thumbnail sudah ada, kirim langsung
 if (file_exists($thumb_path)) {
-    // Cache headers
     header("Cache-Control: public, max-age=86400");
-    header("Expires: " . gmdate('D, d M Y H:i:s', time() + 86400) . " GMT");
     $ext = strtolower(pathinfo($thumb_path, PATHINFO_EXTENSION));
     $mime = 'image/jpeg';
     if ($ext == 'png')
@@ -38,31 +57,46 @@ if (file_exists($thumb_path)) {
     exit;
 }
 
+// Jika bukan gambar yang bisa diproses GD, kirim aslinya
 $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-$src_img = null;
+if (!in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+    send_original($path);
+}
 
-if (in_array($ext, ['jpg', 'jpeg'])) {
-    $src_img = @imagecreatefromjpeg($path);
-} elseif ($ext == 'png') {
-    $src_img = @imagecreatefrompng($path);
-} elseif ($ext == 'gif') {
-    $src_img = @imagecreatefromgif($path);
-} elseif ($ext == 'webp') {
-    $src_img = @imagecreatefromwebp($path);
+// Coba buat thumbnail
+$src_img = null;
+try {
+    if (in_array($ext, ['jpg', 'jpeg'])) {
+        $src_img = @imagecreatefromjpeg($path);
+    } elseif ($ext == 'png') {
+        $src_img = @imagecreatefrompng($path);
+    } elseif ($ext == 'gif') {
+        $src_img = @imagecreatefromgif($path);
+    } elseif ($ext == 'webp') {
+        $src_img = @imagecreatefromwebp($path);
+    }
+} catch (Exception $e) {
+    $src_img = null;
 }
 
 if (!$src_img) {
-    header("HTTP/1.0 404 Not Found");
-    exit;
+    send_original($path);
 }
 
 $width = imagesx($src_img);
 $height = imagesy($src_img);
-$thumb_width = 150;
+
+// Minimal size check - jika sangat kecil tidak perlu thumb
+if ($width <= 200) {
+    imagedestroy($src_img);
+    send_original($path);
+}
+
+$thumb_width = 200;
 $thumb_height = floor($height * ($thumb_width / $width));
 $dst_img = imagecreatetruecolor($thumb_width, $thumb_height);
 
-// Pertahankan transparansi (untuk PNG/WebP)
+// Pertahankan transparansi
 if ($ext == 'png' || $ext == 'webp' || $ext == 'gif') {
     imagealphablending($dst_img, false);
     imagesavealpha($dst_img, true);
@@ -72,27 +106,35 @@ if ($ext == 'png' || $ext == 'webp' || $ext == 'gif') {
 
 imagecopyresampled($dst_img, $src_img, 0, 0, 0, 0, $thumb_width, $thumb_height, $width, $height);
 
-// Simpan dan tampilkan
-header("Cache-Control: public, max-age=86400");
-header("Expires: " . gmdate('D, d M Y H:i:s', time() + 86400) . " GMT");
-
+// Simpan untuk next cache
 if ($ext == 'png') {
-    header('Content-Type: image/png');
-    imagepng($dst_img, $thumb_path, 8);
-    imagepng($dst_img);
+    imagepng($dst_img, $thumb_path, 7);
 } elseif ($ext == 'gif') {
-    header('Content-Type: image/gif');
     imagegif($dst_img, $thumb_path);
-    imagegif($dst_img);
 } elseif ($ext == 'webp') {
-    header('Content-Type: image/webp');
-    imagewebp($dst_img, $thumb_path, 80);
-    imagewebp($dst_img, null, 80);
+    imagewebp($dst_img, $thumb_path, 70);
 } else {
-    header('Content-Type: image/jpeg');
-    imagejpeg($dst_img, $thumb_path, 80);
-    imagejpeg($dst_img, null, 80);
+    imagejpeg($dst_img, $thumb_path, 75);
 }
+
+// Tampilkan sekarang
+header("Content-Type: image/jpeg"); // Output as jpeg for efficiency if possible, or keep original type
+if ($ext == 'png')
+    header('Content-Type: image/png');
+elseif ($ext == 'gif')
+    header('Content-Type: image/gif');
+elseif ($ext == 'webp')
+    header('Content-Type: image/webp');
+
+header("Cache-Control: public, max-age=86400");
+if ($ext == 'png')
+    imagepng($dst_img);
+elseif ($ext == 'gif')
+    imagegif($dst_img);
+elseif ($ext == 'webp')
+    imagewebp($dst_img, null, 70);
+else
+    imagejpeg($dst_img, null, 75);
 
 imagedestroy($src_img);
 imagedestroy($dst_img);
