@@ -11,6 +11,12 @@ Sistem Pengarsipan & Grouping Dokumen Instansi berbasis Web. Aplikasi ini memuda
 - **Geotagging**: Pelacakan lokasi dokumen melalui koordinat Latitude dan Longitude dengan integrasi Google Maps.
 - **Pencarian Pintar**: Mencari dokumen berdasarkan Judul, Keterangan, Lokasi, atau Nama File lampiran.
 - **Audit Logs**: Mencatat setiap aktivitas user (upload, edit, hapus) untuk keamanan data.
+- **Security Hardening**:
+  - **Upload Filtering**: Validasi whitelist ekstensi file untuk mencegah upload script berbahaya (.php, .exe, dsb).
+  - **Execution Blocking**: Proteksi `.htaccess` di folder upload untuk mematikan eksekusi script di tingkat server.
+- **Optimasi Performa**:
+  - **N+1 Query Fix**: Pengambilan data lampiran secara batch untuk meringankan beban database MySQL.
+  - **Native Lazy Loading**: Mempercepat load halaman dashboard dengan memuat gambar hanya saat masuk ke area pandang (viewport).
 - **Antarmuka Modern**: UI responsif menggunakan CSS modern dan Feather Icons.
 
 ## Teknologi yang Digunakan
