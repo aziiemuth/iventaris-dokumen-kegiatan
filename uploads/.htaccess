@@ -1,0 +1,17 @@
+<FilesMatch "\.(php|php3|php4|php5|php7|php8|phtml|pl|py|jsp|asp|htm|html|shtml|sh|cgi|exe|bat)$">
+    Require all denied
+</FilesMatch>
+
+# Matikan engine PHP (khusus apache + mod_php)
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+
+# Options -ExecCGI untuk mencegah eksekusi perl/cgi dsb
+Options -ExecCGI

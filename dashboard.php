@@ -134,7 +134,12 @@ if ($is_search_mode) {
             </a>
 
             <a href="folder.php" class="sidebar-link">
-                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                    <line x1="12" y1="11" x2="12" y2="17" />
+                    <line x1="9" y1="14" x2="15" y2="14" />
+                </svg>
                 Kategori
             </a>
 
@@ -144,7 +149,10 @@ if ($is_search_mode) {
                 <a href="users.php" class="sidebar-link">
                     <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                     </svg>
                     Manajemen User
                 </a>
@@ -311,32 +319,30 @@ if ($is_search_mode) {
                             </a>
                         <?php else: ?>
                             <!-- Create folder -->
-                                <a href="folder.php" class="btn btn-outline"
-                                    title="Kelola Kategori / Folder Kegiatan"
-                                    data-tooltip="Kelola Kategori">
-                                    <i data-feather="folder" style="width:15px;height:15px;"></i>
-                                    Kategori
-                                </a>
+                            <a href="folder.php" class="btn btn-outline" title="Kelola Kategori / Folder Kegiatan"
+                                data-tooltip="Kelola Kategori">
+                                <i data-feather="folder" style="width:15px;height:15px;"></i>
+                                Kategori
+                            </a>
                         <?php endif; ?>
 
                         <?php if ($folder_id || $is_search_mode): ?>
-                        <!-- Export ZIP button -->
-                        <a href="export_zip.php?<?php echo $is_search_mode ? 'q=' . urlencode($search) : 'folder=' . $folder_id; ?>"
-                            class="btn btn-outline" style="border-color:#3b82f6;color:#3b82f6;"
-                            title="Download hanya file foto ke dalam format ZIP"
-                            data-tooltip="Export Foto ke ZIP">
-                            <i data-feather="archive" style="width:15px;height:15px;"></i>
-                            Export Foto (ZIP)
-                        </a>
+                            <!-- Export ZIP button -->
+                            <a href="export_zip.php?<?php echo $is_search_mode ? 'q=' . urlencode($search) : 'folder=' . $folder_id; ?>"
+                                class="btn btn-outline" style="border-color:#3b82f6;color:#3b82f6;"
+                                title="Download hanya file foto ke dalam format ZIP" data-tooltip="Export Foto ke ZIP">
+                                <i data-feather="archive" style="width:15px;height:15px;"></i>
+                                Export Foto (ZIP)
+                            </a>
 
-                        <!-- Export button -->
-                        <a href="export_doc.php?<?php echo $is_search_mode ? 'q=' . urlencode($search) : 'folder=' . $folder_id; ?>"
-                            class="btn btn-outline" style="border-color:#10b981;color:#10b981;"
-                            title="Download daftar dokumen ini ke format Word (.docx)"
-                            data-tooltip="Export tabel ke Word (.docx)">
-                            <i data-feather="file-text" style="width:15px;height:15px;"></i>
-                            Export ke Word
-                        </a>
+                            <!-- Export button -->
+                            <a href="export_doc.php?<?php echo $is_search_mode ? 'q=' . urlencode($search) : 'folder=' . $folder_id; ?>"
+                                class="btn btn-outline" style="border-color:#10b981;color:#10b981;"
+                                title="Download daftar dokumen ini ke format Word (.docx)"
+                                data-tooltip="Export tabel ke Word (.docx)">
+                                <i data-feather="file-text" style="width:15px;height:15px;"></i>
+                                Export ke Word
+                            </a>
                         <?php endif; ?>
 
                         <!-- Upload button (all roles) -->
@@ -412,12 +418,26 @@ if ($is_search_mode) {
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php while ($d = mysqli_fetch_assoc($files_data)):
+                                <?php
+                                $docs = [];
+                                $doc_ids = [];
+                                while ($d = mysqli_fetch_assoc($files_data)) {
+                                    $docs[] = $d;
+                                    $doc_ids[] = (int) $d['id'];
+                                }
+
+                                $all_attachments = [];
+                                if (!empty($doc_ids)) {
+                                    $ids_str = implode(',', $doc_ids);
+                                    $q_all_atts = mysqli_query($koneksi, "SELECT * FROM attachments WHERE document_id IN ($ids_str)");
+                                    while ($a = mysqli_fetch_assoc($q_all_atts)) {
+                                        $all_attachments[$a['document_id']][] = $a;
+                                    }
+                                }
+
+                                foreach ($docs as $d):
                                     $doc_id = $d['id'];
-                                    $q_atts = mysqli_query($koneksi, "SELECT * FROM attachments WHERE document_id = $doc_id");
-                                    $attachments_arr = [];
-                                    while ($a = mysqli_fetch_assoc($q_atts))
-                                        $attachments_arr[] = $a;
+                                    $attachments_arr = isset($all_attachments[$doc_id]) ? $all_attachments[$doc_id] : [];
 
                                     $judul = !empty($d['judul_dokumen']) ? $d['judul_dokumen'] : 'Dokumen Tanpa Judul';
                                     $keterangan = !empty($d['keterangan']) ? $d['keterangan'] : '-';
@@ -488,11 +508,13 @@ if ($is_search_mode) {
                                                             <div style="height:90px;border-radius:6px;overflow:hidden;background:#f1f5f9;margin-bottom:0.45rem;cursor:pointer;"
                                                                 onclick="window.open('file_action.php?id=<?php echo $att['id']; ?>&action=view','_blank')"
                                                                 title="Klik untuk melihat gambar">
-                                                                <img src="uploads/<?php echo htmlspecialchars($att['nama_file']); ?>"
-                                                                    style="width:100%;height:100%;object-fit:cover;" alt="Preview">
+                                                                <img src="thumb.php?file=<?php echo urlencode($att['nama_file']); ?>"
+                                                                    loading="lazy" style="width:100%;height:100%;object-fit:cover;"
+                                                                    alt="Preview">
                                                             </div>
                                                         <?php endif; ?>
-                                                        <div style="display:flex;align-items:flex-start;gap:0.4rem;margin-bottom:0.35rem;">
+                                                        <div
+                                                            style="display:flex;align-items:flex-start;gap:0.4rem;margin-bottom:0.35rem;">
                                                             <i data-feather="<?php echo $is_img ? 'image' : 'file-text'; ?>"
                                                                 style="width:12px;height:12px;color:var(--primary);flex-shrink:0;margin-top:0.2rem;"></i>
                                                             <div style="flex:1; overflow:hidden;">
@@ -501,9 +523,10 @@ if ($is_search_mode) {
                                                                     <?php echo htmlspecialchars(strlen($att['nama_asli']) > 18 ? substr($att['nama_asli'], 0, 16) . '…' : $att['nama_asli']); ?>
                                                                 </div>
                                                                 <?php if (!empty($att['keterangan'])): ?>
-                                                                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.2rem; line-height:1.2;">
-                                                                    <?php echo htmlspecialchars($att['keterangan']); ?>
-                                                                </div>
+                                                                    <div
+                                                                        style="font-size:0.7rem; color:var(--text-muted); margin-top:0.2rem; line-height:1.2;">
+                                                                        <?php echo htmlspecialchars($att['keterangan']); ?>
+                                                                    </div>
                                                                 <?php endif; ?>
                                                             </div>
                                                         </div>
@@ -562,7 +585,7 @@ if ($is_search_mode) {
                                             </div>
                                         </td>
                                     </tr>
-                                <?php endwhile; ?>
+                                <?php endforeach; ?>
                             </tbody>
                         </table>
                     </div>
@@ -592,12 +615,26 @@ if ($is_search_mode) {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php while ($d = mysqli_fetch_assoc($root_files)):
+                                    <?php
+                                    $docs_root = [];
+                                    $doc_ids_root = [];
+                                    while ($d = mysqli_fetch_assoc($root_files)) {
+                                        $docs_root[] = $d;
+                                        $doc_ids_root[] = (int) $d['id'];
+                                    }
+
+                                    $all_atts_root = [];
+                                    if (!empty($doc_ids_root)) {
+                                        $ids_str_root = implode(',', $doc_ids_root);
+                                        $q_all_atts_root = mysqli_query($koneksi, "SELECT * FROM attachments WHERE document_id IN ($ids_str_root)");
+                                        while ($a = mysqli_fetch_assoc($q_all_atts_root)) {
+                                            $all_atts_root[$a['document_id']][] = $a;
+                                        }
+                                    }
+
+                                    foreach ($docs_root as $d):
                                         $doc_id = $d['id'];
-                                        $q_atts = mysqli_query($koneksi, "SELECT * FROM attachments WHERE document_id = $doc_id");
-                                        $attachments_arr = [];
-                                        while ($a = mysqli_fetch_assoc($q_atts))
-                                            $attachments_arr[] = $a;
+                                        $attachments_arr = isset($all_atts_root[$doc_id]) ? $all_atts_root[$doc_id] : [];
                                         $judul = !empty($d['judul_dokumen']) ? $d['judul_dokumen'] : 'Dokumen Tanpa Judul';
                                         $keterangan = !empty($d['keterangan']) ? $d['keterangan'] : '-';
                                         $tanggal = !empty($d['tanggal_upload']) ? date('d M Y', strtotime($d['tanggal_upload'])) : '-';
@@ -614,7 +651,8 @@ if ($is_search_mode) {
                                                 </div>
                                                 <div
                                                     style="font-size:0.75rem;color:var(--text-light);display:flex;align-items:center;gap:0.3rem;">
-                                                    <i data-feather="clock" style="width:11px;height:11px;"></i><?php echo $tanggal; ?>
+                                                    <i data-feather="clock"
+                                                        style="width:11px;height:11px;"></i><?php echo $tanggal; ?>
                                                     <span style="color:var(--border);">|</span>
                                                     <i data-feather="user" style="width:11px;height:11px;"></i>
                                                     <?php echo htmlspecialchars($d['uploader_name'] ?? 'Unknown'); ?>
@@ -646,11 +684,13 @@ if ($is_search_mode) {
                                                             <?php if ($is_img): ?>
                                                                 <div style="height:80px;border-radius:6px;overflow:hidden;background:#f1f5f9;margin-bottom:0.4rem;cursor:pointer;"
                                                                     onclick="window.open('file_action.php?id=<?php echo $att['id']; ?>&action=view','_blank')">
-                                                                    <img src="uploads/<?php echo htmlspecialchars($att['nama_file']); ?>"
-                                                                        style="width:100%;height:100%;object-fit:cover;" alt="Preview">
+                                                                    <img src="thumb.php?file=<?php echo urlencode($att['nama_file']); ?>"
+                                                                        loading="lazy" style="width:100%;height:100%;object-fit:cover;"
+                                                                        alt="Preview">
                                                                 </div>
                                                             <?php endif; ?>
-                                                            <div style="display:flex;align-items:flex-start;gap:0.4rem;margin-bottom:0.3rem;">
+                                                            <div
+                                                                style="display:flex;align-items:flex-start;gap:0.4rem;margin-bottom:0.3rem;">
                                                                 <i data-feather="<?php echo $is_img ? 'image' : 'file-text'; ?>"
                                                                     style="width:11px;height:11px;color:var(--primary);margin-top:0.2rem;"></i>
                                                                 <div style="flex:1; overflow:hidden;">
@@ -659,9 +699,10 @@ if ($is_search_mode) {
                                                                         <?php echo htmlspecialchars(strlen($att['nama_asli']) > 16 ? substr($att['nama_asli'], 0, 14) . '…' : $att['nama_asli']); ?>
                                                                     </div>
                                                                     <?php if (!empty($att['keterangan'])): ?>
-                                                                    <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.2rem; line-height:1.2;">
-                                                                        <?php echo htmlspecialchars($att['keterangan']); ?>
-                                                                    </div>
+                                                                        <div
+                                                                            style="font-size:0.7rem; color:var(--text-muted); margin-top:0.2rem; line-height:1.2;">
+                                                                            <?php echo htmlspecialchars($att['keterangan']); ?>
+                                                                        </div>
                                                                     <?php endif; ?>
                                                                 </div>
                                                             </div>
@@ -710,7 +751,7 @@ if ($is_search_mode) {
                                                 </div>
                                             </td>
                                         </tr>
-                                    <?php endwhile; ?>
+                                    <?php endforeach; ?>
                                 </tbody>
                             </table>
                         </div>

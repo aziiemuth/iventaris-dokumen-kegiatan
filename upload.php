@@ -28,12 +28,22 @@ if (isset($_POST['upload'])) {
             mkdir($target_dir, 0777, true);
 
         $berhasil_upload = 0;
+        $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv', 'zip', 'rar', '7z'];
+
         foreach ($_FILES['files']['name'] as $key => $nama_asli) {
             $tmp = $_FILES['files']['tmp_name'][$key];
             $ukuran = $_FILES['files']['size'][$key];
             if (!empty($nama_asli)) {
-                $nama_asli_bersih = str_replace(' ', '_', $nama_asli);
+                // Security Check: Ekstensi
+                $ext = strtolower(pathinfo($nama_asli, PATHINFO_EXTENSION));
+                if (!in_array($ext, $allowed_extensions)) {
+                    continue; // Skip file berbahaya/tidak dikenali
+                }
+
+                // Security Check: Sanitize nama file
+                $nama_asli_bersih = preg_replace('/[^A-Za-z0-9.\-_]/', '_', $nama_asli);
                 $nama_file = time() . '_' . rand(100, 999) . '_' . $nama_asli_bersih;
+
                 if (move_uploaded_file($tmp, $target_dir . $nama_file)) {
                     $ket_file = isset($_POST['file_keterangan'][$key]) ? mysqli_real_escape_string($koneksi, $_POST['file_keterangan'][$key]) : '';
                     $q_att = "INSERT INTO attachments (document_id, nama_file, nama_asli, ukuran, keterangan) 
