@@ -1,6 +1,9 @@
 <?php
 // Script untuk mengompres dan menampilkan gambar thumbnail
 // Berguna untuk menghemat bandwidth dan mempercepat loading dashboard
+error_reporting(0);
+@ini_set('display_errors', 0);
+
 if (!isset($_GET['file'])) {
     header("HTTP/1.0 404 Not Found");
     exit;
@@ -20,6 +23,8 @@ if (!file_exists($path)) {
 // Fungsi untuk mengirim file asli sebagai fallback
 function send_original($file_path)
 {
+    if (ob_get_length())
+        ob_clean();
     $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
     $mimes = [
         'jpg' => 'image/jpeg',
@@ -43,6 +48,8 @@ if (!is_dir($thumb_dir)) {
 
 // Jika thumbnail sudah ada, kirim langsung
 if (file_exists($thumb_path)) {
+    if (ob_get_length())
+        ob_clean();
     header("Cache-Control: public, max-age=86400");
     $ext = strtolower(pathinfo($thumb_path, PATHINFO_EXTENSION));
     $mime = 'image/jpeg';
@@ -87,14 +94,19 @@ $width = imagesx($src_img);
 $height = imagesy($src_img);
 
 // Minimal size check - jika sangat kecil tidak perlu thumb
-if ($width <= 200) {
+if ($width <= 200 || $height <= 200) {
     imagedestroy($src_img);
     send_original($path);
 }
 
 $thumb_width = 200;
 $thumb_height = floor($height * ($thumb_width / $width));
-$dst_img = imagecreatetruecolor($thumb_width, $thumb_height);
+$dst_img = @imagecreatetruecolor($thumb_width, $thumb_height);
+
+if (!$dst_img) {
+    imagedestroy($src_img);
+    send_original($path);
+}
 
 // Pertahankan transparansi
 if ($ext == 'png' || $ext == 'webp' || $ext == 'gif') {
@@ -108,34 +120,40 @@ imagecopyresampled($dst_img, $src_img, 0, 0, 0, 0, $thumb_width, $thumb_height, 
 
 // Simpan untuk next cache
 if ($ext == 'png') {
-    imagepng($dst_img, $thumb_path, 7);
+    @imagepng($dst_img, $thumb_path, 7);
 } elseif ($ext == 'gif') {
-    imagegif($dst_img, $thumb_path);
+    @imagegif($dst_img, $thumb_path);
 } elseif ($ext == 'webp') {
-    imagewebp($dst_img, $thumb_path, 70);
+    @imagewebp($dst_img, $thumb_path, 70);
 } else {
-    imagejpeg($dst_img, $thumb_path, 75);
+    @imagejpeg($dst_img, $thumb_path, 75);
 }
 
 // Tampilkan sekarang
-header("Content-Type: image/jpeg"); // Output as jpeg for efficiency if possible, or keep original type
-if ($ext == 'png')
-    header('Content-Type: image/png');
-elseif ($ext == 'gif')
-    header('Content-Type: image/gif');
-elseif ($ext == 'webp')
-    header('Content-Type: image/webp');
+if (ob_get_length())
+    ob_clean();
 
-header("Cache-Control: public, max-age=86400");
+$mime_out = 'image/jpeg';
 if ($ext == 'png')
-    imagepng($dst_img);
+    $mime_out = 'image/png';
 elseif ($ext == 'gif')
-    imagegif($dst_img);
+    $mime_out = 'image/gif';
 elseif ($ext == 'webp')
-    imagewebp($dst_img, null, 70);
+    $mime_out = 'image/webp';
+
+header("Content-Type: " . $mime_out);
+header("Cache-Control: public, max-age=86400");
+
+if ($ext == 'png')
+    @imagepng($dst_img);
+elseif ($ext == 'gif')
+    @imagegif($dst_img);
+elseif ($ext == 'webp')
+    @imagewebp($dst_img, null, 70);
 else
-    imagejpeg($dst_img, null, 75);
+    @imagejpeg($dst_img, null, 75);
 
 imagedestroy($src_img);
 imagedestroy($dst_img);
+exit;
 ?>

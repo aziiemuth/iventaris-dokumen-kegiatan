@@ -508,7 +508,7 @@ if ($is_search_mode) {
                                                             <div style="height:90px;border-radius:6px;overflow:hidden;background:#f1f5f9;margin-bottom:0.45rem;cursor:pointer;"
                                                                 onclick="window.open('file_action.php?id=<?php echo $att['id']; ?>&action=view','_blank')"
                                                                 title="Klik untuk melihat gambar">
-                                                                <img src="thumb.php?file=<?php echo urlencode($att['nama_file']); ?>"
+                                                                <img src="uploads/<?php echo htmlspecialchars($att['nama_file']); ?>"
                                                                     loading="lazy" style="width:100%;height:100%;object-fit:cover;"
                                                                     alt="Preview">
                                                             </div>
@@ -684,7 +684,7 @@ if ($is_search_mode) {
                                                             <?php if ($is_img): ?>
                                                                 <div style="height:80px;border-radius:6px;overflow:hidden;background:#f1f5f9;margin-bottom:0.4rem;cursor:pointer;"
                                                                     onclick="window.open('file_action.php?id=<?php echo $att['id']; ?>&action=view','_blank')">
-                                                                    <img src="thumb.php?file=<?php echo urlencode($att['nama_file']); ?>"
+                                                                    <img src="uploads/<?php echo htmlspecialchars($att['nama_file']); ?>"
                                                                         loading="lazy" style="width:100%;height:100%;object-fit:cover;"
                                                                         alt="Preview">
                                                                 </div>
