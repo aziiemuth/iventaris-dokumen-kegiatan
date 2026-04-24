@@ -1409,7 +1409,7 @@ input[type="file"]::file-selector-button:hover {
 
   table {
     font-size: 0.8rem;
-    min-width: 480px; /* slightly smaller to fit better */
+    min-width: 400px; /* even smaller to prevent container push */
   }
 
   th,
@@ -1555,18 +1555,19 @@ input[type="file"]::file-selector-button:hover {
 
   .pagination {
     order: 1;
-    justify-content: center;
-    width: 100%;
-    gap: 0.25rem; /* smaller gap for mobile */
-    flex-wrap: wrap;
+    justify-content: center !important;
+    width: 100% !important;
+    gap: 0.2rem !important;
+    flex-wrap: wrap !important;
+    margin-bottom: 0.5rem;
   }
 
   .page-link {
-    min-width: 36px; /* slightly smaller for better fit */
-    height: 36px;
-    font-size: 0.8rem;
+    min-width: 32px !important;
+    height: 32px !important;
+    font-size: 0.75rem !important;
     border-radius: var(--radius-md);
-    margin: 0.15rem; /* subtle margin for wrapped lines */
+    margin: 2px !important;
   }
 
   .page-link svg {
