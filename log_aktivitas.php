@@ -218,66 +218,42 @@ $logs = mysqli_query($koneksi, $query);
                                 <?php echo ($offset + 1); ?> –
                                 <?php echo min($offset + $limit, $total_records); ?> dari
                                 <?php echo $total_records; ?> aktivitas
-                                </div>
-                                <div class="pagination">
-                                    <?php if ($page > 1): ?>
+                            </div>
+                            <div class="pagination">
+                                <?php if ($page > 1): ?>
                                     <a href="?page=<?php echo $page - 1; ?>" class="page-link" title="Halaman Sebelumnya">
                                         <i data-feather="chevron-left"></i>
                                     </a>
                                 <?php else: ?>
                                     <span class="page-link disabled">
                                         <i data-feather="chevron-left"></i>
-                                                </span>
-                                    <?php endif; ?>
-
-                                    <span class="page-link active current-page-info">
-                                                Hal. <?php echo $page; ?> dari
-                                        <?php echo $total_pages; ?>
                                     </span>
-                                
-                        <?php if ($page < $total_pages): ?>
-                                <a href="?page=<?php echo $page + 1; ?>" class="page-link" title="Halaman Selanjutnya">
-                                    <i data-feather="chevron-right"></i>
-                                </a>
-                        <?php else: ?>
-                                <span class="page-link disabled">
-                                    <i data-feather="chevron-right"></i>
+                                <?php endif; ?>
+
+                                <span class="page-link active current-page-info">
+                                    Hal. <?php echo $page; ?> dari
+                                    <?php echo $total_pages; ?>
                                 </span>
-                        <?php endif; ?>
+
+                                <?php if ($page < $total_pages): ?>
+                                    <a href="?page=<?php echo $page + 1; ?>" class="page-link" title="Halaman Selanjutnya">
+                                        <i data-feather="chevron-right"></i>
+                                    </a>
+                                <?php else: ?>
+                                    <span class="page-link disabled">
+                                        <i data-feather="chevron-right"></i>
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                <?php endif; ?>
             </div>
-    <?php endif; ?>
-    </div>
-    </div>
+        </div>
     </div><!-- /main-content -->
     </div><!-- /main-wrapper -->
 
-    <script>
-                                feather.replace();
-               docu             ment.getElementById('btn-logout').addEventListener('click', function (e) {
-                                e.preventDefault();
-                                document.getElementById('logout-modal').classList.add('open');
-                                    document.body.style.overflow = 'hidden';
-                                });
-                     func       tion closeLogoutModal() {
-                                document.getElementById('logout-modal').classList.remove('open');
-                                    document.body.style.overflow = '';
-                                }
-                  docu          ment.getElementById('logout-modal').addEventListener('click', function (e) {
-                                    if (e.target === this) closeLogoutModal();
-                                    });
-                 func           tion openSidebar() {
-                                document.getElementById('sidebar').classList.add('open');
-                                document.getElementById('sidebar-overlay').classList.add('open');
-                                    document.body.style.overflow = 'hidden';
-                                }
-                      func      tion closeSidebar() {
-                                document.getElementById('sidebar').classList.remove('open');
-                                document.getElementById('sidebar-overlay').classList.remove('open');
-                                    document.body.style.overflow = '';
-                                    }
-    </script>
+    <script src="assets/script.js"></script>
 </body>
 
 </html>

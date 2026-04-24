@@ -844,23 +844,7 @@ if ($is_search_mode) {
     </div>
 
     <script>
-        feather.replace();
 
-        /* ===== LOGOUT MODAL ===== */
-        document.getElementById('btn-logout').addEventListener('click', function (e) {
-            e.preventDefault();
-            document.getElementById('logout-modal').classList.add('open');
-            document.body.style.overflow = 'hidden';
-        });
-
-        function closeLogoutModal() {
-            document.getElementById('logout-modal').classList.remove('open');
-            document.body.style.overflow = '';
-        }
-
-        document.getElementById('logout-modal').addEventListener('click', function (e) {
-            if (e.target === this) closeLogoutModal();
-        });
 
 
         /* ===== DELETE MODAL ===== */
@@ -884,8 +868,7 @@ if ($is_search_mode) {
         /* ===== ESC key to close modals ===== */
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
-                closeLogoutModal();
-                closeDeleteModal();
+                if (typeof closeDeleteModal === 'function') closeDeleteModal();
             }
         });
 
@@ -900,27 +883,13 @@ if ($is_search_mode) {
             });
         }
 
-        /* ===== Sidebar toggle (mobile) ===== */
-        function openSidebar() {
-            document.getElementById('sidebar').classList.add('open');
-            document.getElementById('sidebar-overlay').classList.add('open');
-            document.body.style.overflow = 'hidden';
-        }
 
-        function closeSidebar() {
-            document.getElementById('sidebar').classList.remove('open');
-            document.getElementById('sidebar-overlay').classList.remove('open');
-            document.body.style.overflow = '';
-        }
-
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') closeSidebar();
-        });
     </script>
 
     </main><!-- /main-content -->
     </div><!-- /main-wrapper -->
 
+    <script src="assets/script.js"></script>
 </body>
 
 </html>

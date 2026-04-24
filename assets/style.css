@@ -2,10 +2,10 @@
 
 /* === ROOT DESIGN TOKENS === */
 :root {
-  --primary: #1a56db;
-  --primary-hover: #1e40af;
-  --primary-light: #e8f0fe;
-  --primary-dark: #1e3a8a;
+  --primary: #4f46e5;      /* Modern Indigo */
+  --primary-hover: #4338ca;
+  --primary-light: #e0e7ff;
+  --primary-dark: #3730a3;
 
   --success: #10b981;
   --success-light: #ecfdf5;
@@ -16,12 +16,12 @@
   --danger-light: #fef2f2;
 
   --text-main: #0f172a;
-  --text-muted: #64748b;
+  --text-muted: #475569;
   --text-light: #94a3b8;
 
-  --bg-body: #f1f5f9;
+  --bg-body: #f8fafc;
   --bg-card: #ffffff;
-  --bg-sidebar: #0a1628;
+  --bg-sidebar: #0f172a; /* Sleek slate-900 */
 
   --border-color: #e2e8f0;
   --border-focus: #93c5fd;

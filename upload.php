@@ -712,32 +712,9 @@ $prefill_folder = isset($_GET['folder']) ? (int) $_GET['folder'] : "";
             if (e.key === 'Escape') closeUploadModal();
         });
 
-        /* Logout modal */
-        document.getElementById('btn-logout').addEventListener('click', function (e) {
-            e.preventDefault();
-            document.getElementById('logout-modal').classList.add('open');
-            document.body.style.overflow = 'hidden';
-        });
-        function closeLogoutModal() {
-            document.getElementById('logout-modal').classList.remove('open');
-            document.body.style.overflow = '';
-        }
-        document.getElementById('logout-modal').addEventListener('click', function (e) {
-            if (e.target === this) closeLogoutModal();
-        });
 
-        /* Sidebar mobile */
-        function openSidebar() {
-            document.getElementById('sidebar').classList.add('open');
-            document.getElementById('sidebar-overlay').classList.add('open');
-            document.body.style.overflow = 'hidden';
-        }
-        function closeSidebar() {
-            document.getElementById('sidebar').classList.remove('open');
-            document.getElementById('sidebar-overlay').classList.remove('open');
-            document.body.style.overflow = '';
-        }
     </script>
+    <script src="assets/script.js"></script>
 </body>
 
 </html>
