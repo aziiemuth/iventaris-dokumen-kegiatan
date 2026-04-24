@@ -1192,6 +1192,18 @@ input[type="file"]::file-selector-button:hover {
   cursor: pointer;
 }
 
+.current-page-info {
+  min-width: 130px !important;
+  cursor: default !important;
+  background: var(--bg-body) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border-color) !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+  padding: 0 1rem !important;
+}
+
 .page-link:hover:not(.disabled):not(.active) {
   border-color: var(--primary);
   color: var(--primary);
