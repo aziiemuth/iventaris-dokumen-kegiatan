@@ -62,33 +62,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         audit_log('Generate Dummy', null, "Admin membuat 15 kategori ISP dan 300 dokumen dummy.");
-        header("Location: tools.php?msg=dummy_success");
+        header("Location: setting.php?msg=dummy_success");
         exit;
     }
 
     if ($action === 'clear_data') {
-        // Find and delete all attachment files physically
-        $atts = mysqli_query($koneksi, "SELECT * FROM attachments");
-        $target_dir = __DIR__ . '/uploads/';
-        while ($att = mysqli_fetch_assoc($atts)) {
-            $file_path = $target_dir . $att['nama_file'];
-            if (file_exists($file_path) && is_file($file_path)) {
-                unlink($file_path);
-            }
-        }
+        // (Hanya menghapus database, file fisik dibiarkan aman)
 
         // Delete rows using DELETE (can't use TRUNCATE if we want to retain constraints, though DELETE is fine)
         mysqli_query($koneksi, "DELETE FROM attachments");
         mysqli_query($koneksi, "DELETE FROM documents");
         mysqli_query($koneksi, "DELETE FROM folders");
+        mysqli_query($koneksi, "DELETE FROM audit_logs");
 
         // Optional: Reset auto increment
         mysqli_query($koneksi, "ALTER TABLE attachments AUTO_INCREMENT = 1");
         mysqli_query($koneksi, "ALTER TABLE documents AUTO_INCREMENT = 1");
         mysqli_query($koneksi, "ALTER TABLE folders AUTO_INCREMENT = 1");
+        mysqli_query($koneksi, "ALTER TABLE audit_logs AUTO_INCREMENT = 1");
 
         audit_log('Clear Data', null, "Admin membersihkan semua data folder, dokumen, dan file lampiran dari database !!");
-        header("Location: tools.php?msg=clear_success");
+        header("Location: setting.php?msg=clear_success");
         exit;
     }
 }
@@ -165,30 +159,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 Log Aktivitas
             </a>
 
-            <a href="tools.php" class="sidebar-link active">
+            <a href="setting.php" class="sidebar-link active">
                 <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path
                         d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
                 </svg>
-                Tools
+                Setting
             </a>
 
-            <?php if ($folders_data_sidebar = mysqli_query($koneksi, "SELECT id, nama_folder FROM folders ORDER BY nama_folder ASC")): ?>
-                <?php if (mysqli_num_rows($folders_data_sidebar) > 0): ?>
-                    <div class="sidebar-label">Kategori</div>
-                    <?php while ($sf = mysqli_fetch_assoc($folders_data_sidebar)): ?>
-                        <a href="dashboard.php?folder=<?php echo $sf['id']; ?>" class="sidebar-link"
-                            title="<?php echo htmlspecialchars($sf['nama_folder']); ?>">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-                            </svg>
-                            <?php echo htmlspecialchars($sf['nama_folder']); ?>
-                        </a>
-                    <?php endwhile; ?>
-                <?php endif; ?>
-            <?php endif; ?>
+
         </nav>
         <div class="sidebar-bottom">
             <a href="logout.php" class="sidebar-link" style="color:var(--danger)">
@@ -214,7 +194,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <line x1="3" y1="6" x2="21" y2="6" />
                         <line x1="3" y1="18" x2="21" y2="18" />
                     </svg></button>
-                <h3 style="margin-left: 1rem;">Sistem Tools (Admin)</h3>
+                <h3 style="margin-left: 1rem; color:var(--primary);">Inventaris Dokumen</h3>
             </div>
         </header>
 
@@ -250,7 +230,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         Fitur ini akan menambah <strong>15 kategori</strong> dan <strong>20 dokumen</strong> di
                         setiap kategori (Total 300 dokumen).
                     </p>
-                    <form method="POST" action="tools.php">
+                    <form method="POST" action="setting.php">
                         <input type="hidden" name="action" value="generate_dummy">
                         <button type="submit" class="btn btn-primary"
                             onclick="return confirm('Buat data dummy sekarang? Data yang ada tidak akan terhapus.');">
@@ -271,11 +251,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
                     <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom: 2rem;">
-                        Fitur berbahaya. Opsi ini akan menghapus <strong>seluruh data</strong> di tabel Folders,
-                        Documents, dan Attachments pada database anda, dan tidak hanya itu program akan
-                        <strong>menghapus/unlink</strong> seluruh file fisik yang sudah diupload ke sistem.
+                        Fitur berbahaya. Opsi ini akan <strong>mengosongkan seluruh data</strong> di tabel Folders,
+                        Documents, Attachments, dan Log Aktivitas pada database anda. Hanya <strong>data User</strong> yang tidak akan dihapus. File fisik foto/dokumen di partisi
+                        D:\ juga tetap aman.
                         <br><br>
-                        Data yang sudah dihapus tidak bisa dikembalikan kecuali Anda punya backup SQL.
+                        Data tabel yang sudah dikosongkan tidak bisa dikembalikan kecuali Anda punya backup SQL.
                     </p>
                     <!-- the button will open a custom modal for clear safety -->
                     <button type="button" class="btn btn-danger" onclick="openClearModal()">
@@ -301,13 +281,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="modal-title">Konfirmasi TRUNCATE / DELETE ALL</div>
             <div class="modal-desc" style="color:var(--text-main);">
-                Apakah Anda setuju ingin menghapus <strong>seluruh database dokumen</strong> & <strong>seluruh file
-                    fisik</strong>?<br><br>
-                Tindakan ini tidak bisa dibatalkan! Semua file akan di-unlinked dari direktori `uploads/`. Log aktivitas
-                tidak akan dihapus.
+                Apakah Anda setuju ingin mengosongkan <strong>seluruh tabel database</strong> (kecuali User)?<br><br>
+                Tindakan ini tidak bisa dibatalkan! Semua tabel termasuk Log Aktivitas akan dikosongkan. Namun, file fisik foto/dokumen akan tetap aman di partisi D:\.
             </div>
 
-            <form method="POST" action="tools.php" style="margin-top: 1rem;">
+            <form method="POST" action="setting.php" style="margin-top: 1rem;">
                 <input type="hidden" name="action" value="clear_data">
 
                 <!-- Type validation for extra safety -->

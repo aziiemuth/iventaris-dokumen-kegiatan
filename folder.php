@@ -37,10 +37,10 @@ if (isset($_POST['edit']) && $user_role === 'admin') {
 if (isset($_POST['hapus']) && $user_role === 'admin') {
     $id_hapus = (int) $_POST['folder_id_hapus'];
 
-    // Tarik list semua attachment fisik dari semua dokumen yang ada di dalam folder ini
+    $target_dir = get_upload_path($id_hapus, $koneksi);
     $q_atts = mysqli_query($koneksi, "SELECT a.nama_file FROM attachments a JOIN documents d ON a.document_id = d.id WHERE d.folder_id = $id_hapus");
     while ($att = mysqli_fetch_assoc($q_atts)) {
-        $file_path = __DIR__ . '/uploads/' . $att['nama_file'];
+        $file_path = $target_dir . $att['nama_file'];
         if (file_exists($file_path) && is_file($file_path)) {
             unlink($file_path);
         }
@@ -106,7 +106,7 @@ $folders_data = mysqli_query($koneksi, "
                     </svg>
                 </button>
             </div>
-            <div style="font-weight:700; color:var(--primary); font-size:1.1rem; margin-left:0.5rem;">Manajemen Kategori
+            <div style="font-weight:700; color:var(--primary); font-size:1.1rem; margin-left:0.5rem;">Inventaris Dokumen
             </div>
         </header>
 

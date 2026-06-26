@@ -18,17 +18,17 @@ $is_search_mode = !empty($search);
 $user_filter = "";
 
 if ($is_search_mode) {
-    $q = "SELECT d.id, d.judul_dokumen FROM documents d WHERE (d.judul_dokumen LIKE '%$search%' OR d.id IN (SELECT document_id FROM attachments WHERE nama_asli LIKE '%$search%' OR keterangan LIKE '%$search%')) $user_filter";
+    $q = "SELECT d.id, d.judul_dokumen, d.folder_id FROM documents d WHERE (d.judul_dokumen LIKE '%$search%' OR d.id IN (SELECT document_id FROM attachments WHERE nama_asli LIKE '%$search%' OR keterangan LIKE '%$search%')) $user_filter";
     $title = "Foto_Pencarian_" . preg_replace('/[^a-zA-Z0-9_-]/', '_', $search);
 } else {
     if ($folder_id) {
-        $q = "SELECT d.id, d.judul_dokumen FROM documents d WHERE d.folder_id = $folder_id $user_filter";
+        $q = "SELECT d.id, d.judul_dokumen, d.folder_id FROM documents d WHERE d.folder_id = $folder_id $user_filter";
         $fq = mysqli_query($koneksi, "SELECT nama_folder FROM folders WHERE id = $folder_id");
         $fol = mysqli_fetch_assoc($fq);
         $name = $fol ? preg_replace('/[^a-zA-Z0-9_-]/', '_', $fol['nama_folder']) : 'Kategori';
         $title = "Foto_Kategori_" . $name;
     } else {
-        $q = "SELECT d.id, d.judul_dokumen FROM documents d WHERE d.folder_id IS NULL $user_filter";
+        $q = "SELECT d.id, d.judul_dokumen, d.folder_id FROM documents d WHERE d.folder_id IS NULL $user_filter";
         $title = "Foto_Tanpa_Kategori";
     }
 }
@@ -59,7 +59,7 @@ if (mysqli_num_rows($files_data) > 0) {
             $is_img = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'jfif']);
 
             if ($is_img) {
-                $f_path = __DIR__ . '/uploads/' . $a['nama_file'];
+                $f_path = get_upload_path($d['folder_id'], $koneksi) . $a['nama_file'];
                 if (file_exists($f_path)) {
                     // Masukkan ke dalam folder berdasarkan judul dokumen
                     $zip->addFile($f_path, $folder_zip . '/' . $doc_id . '_' . $a['nama_asli']);

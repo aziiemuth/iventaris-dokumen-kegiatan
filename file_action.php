@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Ambil data lampiran & cek kepemilikan
         $q = mysqli_query($koneksi, "
-            SELECT a.*, d.user_id FROM attachments a
+            SELECT a.*, d.user_id, d.folder_id FROM attachments a
             JOIN documents d ON a.document_id = d.id
             WHERE a.id = $att_id
         ");
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Hapus file fisik dari folder uploads/
-        $file_path = __DIR__ . '/uploads/' . $att['nama_file'];
+        $file_path = get_upload_path($att['folder_id'], $koneksi) . $att['nama_file'];
         if (file_exists($file_path) && is_file($file_path)) {
             unlink($file_path);
         }
@@ -70,7 +70,7 @@ if ($id === 0) {
 }
 
 $query = mysqli_query($koneksi, "
-    SELECT a.*, d.user_id, d.tanggal_upload, d.latitude, d.longitude
+    SELECT a.*, d.user_id, d.folder_id, d.tanggal_upload, d.latitude, d.longitude
     FROM attachments a 
     JOIN documents d ON a.document_id = d.id 
     WHERE a.id = $id
@@ -81,7 +81,7 @@ if (!$file) {
     die("File tidak ditemukan.");
 }
 
-$file_path = __DIR__ . '/uploads/' . $file['nama_file'];
+$file_path = get_upload_path($file['folder_id'], $koneksi) . $file['nama_file'];
 
 if (!file_exists($file_path) || !is_file($file_path)) {
     die("File fisik tidak ditemukan.");

@@ -4,15 +4,31 @@
 error_reporting(0);
 @ini_set('display_errors', 0);
 
-if (!isset($_GET['file'])) {
+include 'config/koneksi.php';
+
+if (!isset($_GET['id'])) {
     header("HTTP/1.0 404 Not Found");
     exit;
 }
 
-$file = basename($_GET['file']);
-$uploads_dir = __DIR__ . DIRECTORY_SEPARATOR . 'uploads';
+$id = (int)$_GET['id'];
+$query = mysqli_query($koneksi, "
+    SELECT a.nama_file, d.folder_id 
+    FROM attachments a
+    JOIN documents d ON a.document_id = d.id
+    WHERE a.id = $id
+");
+
+if (!$query || mysqli_num_rows($query) == 0) {
+    header("HTTP/1.0 404 Not Found");
+    exit;
+}
+
+$att = mysqli_fetch_assoc($query);
+$file = $att['nama_file'];
+$uploads_dir = rtrim(get_upload_path($att['folder_id'], $koneksi), '\\/');
 $path = $uploads_dir . DIRECTORY_SEPARATOR . $file;
-$thumb_dir = $uploads_dir . DIRECTORY_SEPARATOR . 'thumbs';
+$thumb_dir = __DIR__ . DIRECTORY_SEPARATOR . 'thumbs';
 $thumb_path = $thumb_dir . DIRECTORY_SEPARATOR . $file;
 
 if (!file_exists($path)) {
@@ -70,6 +86,11 @@ if (!in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
     send_original($path);
 }
 
+// Check if GD is installed
+if (!extension_loaded('gd') || !function_exists('imagecreatefromjpeg')) {
+    send_original($path);
+}
+
 // Coba buat thumbnail
 $src_img = null;
 try {
@@ -82,7 +103,7 @@ try {
     } elseif ($ext == 'webp') {
         $src_img = @imagecreatefromwebp($path);
     }
-} catch (Exception $e) {
+} catch (Throwable $e) {
     $src_img = null;
 }
 

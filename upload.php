@@ -23,9 +23,7 @@ if (isset($_POST['upload'])) {
 
     if (mysqli_query($koneksi, $query_doc)) {
         $document_id = mysqli_insert_id($koneksi);
-        $target_dir = __DIR__ . '/uploads/';
-        if (!is_dir($target_dir))
-            mkdir($target_dir, 0777, true);
+        $target_dir = get_upload_path($folder_id, $koneksi);
 
         $berhasil_upload = 0;
         $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv', 'zip', 'rar', '7z'];

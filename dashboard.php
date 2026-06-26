@@ -165,25 +165,19 @@ if ($is_search_mode) {
                     Log Aktivitas
                 </a>
 
+                <a href="setting.php" class="sidebar-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                    </svg>
+                    Setting
+                </a>
+
 
             <?php endif; ?>
 
-            <?php if ($folders_data_sidebar = mysqli_query($koneksi, "SELECT id, nama_folder FROM folders ORDER BY nama_folder ASC")): ?>
-                <?php if (mysqli_num_rows($folders_data_sidebar) > 0): ?>
-                    <div class="sidebar-label">Kategori</div>
-                    <?php while ($sf = mysqli_fetch_assoc($folders_data_sidebar)): ?>
-                        <a href="dashboard.php?folder=<?php echo $sf['id']; ?>"
-                            class="sidebar-link <?php echo ($folder_id == $sf['id']) ? 'active' : ''; ?>"
-                            title="<?php echo htmlspecialchars($sf['nama_folder']); ?>">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-                            </svg>
-                            <?php echo htmlspecialchars($sf['nama_folder']); ?>
-                        </a>
-                    <?php endwhile; ?>
-                <?php endif; ?>
-            <?php endif; ?>
+
         </nav>
 
         <!-- Bottom: user info + logout -->
@@ -508,7 +502,7 @@ if ($is_search_mode) {
                                                             <div style="height:90px;border-radius:6px;overflow:hidden;background:#f1f5f9;margin-bottom:0.45rem;cursor:pointer;"
                                                                 onclick="window.open('file_action.php?id=<?php echo $att['id']; ?>&action=view','_blank')"
                                                                 title="Klik untuk melihat gambar">
-                                                                <img src="uploads/<?php echo htmlspecialchars($att['nama_file']); ?>"
+                                                                <img src="thumb.php?id=<?php echo $att['id']; ?>"
                                                                     loading="lazy" style="width:100%;height:100%;object-fit:cover;"
                                                                     alt="Preview">
                                                             </div>
@@ -684,7 +678,7 @@ if ($is_search_mode) {
                                                             <?php if ($is_img): ?>
                                                                 <div style="height:80px;border-radius:6px;overflow:hidden;background:#f1f5f9;margin-bottom:0.4rem;cursor:pointer;"
                                                                     onclick="window.open('file_action.php?id=<?php echo $att['id']; ?>&action=view','_blank')">
-                                                                    <img src="uploads/<?php echo htmlspecialchars($att['nama_file']); ?>"
+                                                                    <img src="thumb.php?id=<?php echo $att['id']; ?>"
                                                                         loading="lazy" style="width:100%;height:100%;object-fit:cover;"
                                                                         alt="Preview">
                                                                 </div>

@@ -46,7 +46,7 @@ if (isset($_POST['update'])) {
         }
 
         if (!empty($_FILES['files']['name'][0])) {
-            $target_dir = __DIR__ . '/uploads/';
+            $target_dir = get_upload_path($folder_id, $koneksi);
             foreach ($_FILES['files']['name'] as $key => $nama_asli) {
                 if (empty($nama_asli))
                     continue;

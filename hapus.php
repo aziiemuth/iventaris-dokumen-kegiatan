@@ -26,7 +26,7 @@ if ($user_role === 'user' && $doc['user_id'] != $user_id) {
 }
 
 // Proceed to delete physical files
-$target_dir = __DIR__ . '/uploads/';
+$target_dir = get_upload_path($doc['folder_id'], $koneksi);
 $atts = mysqli_query($koneksi, "SELECT * FROM attachments WHERE document_id = $id");
 
 while ($att = mysqli_fetch_assoc($atts)) {

@@ -113,7 +113,7 @@ $usersUrl = mysqli_query($koneksi, "SELECT * FROM users ORDER BY username ASC");
                     </svg>
                 </button>
             </div>
-            <div style="font-weight:700; color:var(--primary); font-size:1.1rem; margin-left:0.5rem;">Manajemen User
+            <div style="font-weight:700; color:var(--primary); font-size:1.1rem; margin-left:0.5rem;">Inventaris Dokumen
             </div>
         </header>
 

@@ -8,6 +8,8 @@ if (!$koneksi) {
     die("Koneksi database gagal: " . mysqli_connect_error());
 }
 
+include_once __DIR__ . '/helpers.php';
+
 function audit_log($action, $document_id, $keterangan = "")
 {
     global $koneksi;

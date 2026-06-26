@@ -85,7 +85,7 @@ if (mysqli_num_rows($files_data) > 0) {
 
             // Gambar
             if ($is_img) {
-                $f_path = __DIR__ . '/uploads/' . $a['nama_file'];
+                $f_path = get_upload_path($d['folder_id'], $koneksi) . $a['nama_file'];
                 if (file_exists($f_path)) {
                     $rid = 'rId' . (++$rel_counter);
                     $img_name = 'image' . ($img_counter++) . '.' . ($ext === 'jfif' ? 'jpeg' : $ext);
@@ -111,23 +111,26 @@ if (mysqli_num_rows($files_data) > 0) {
         }
 
         $kat = ($is_search_mode && $d['nama_folder_parent']) ? htmlspecialchars($d['nama_folder_parent'], ENT_XML1, 'UTF-8') : ($d['folder_id'] ? 'Dalam folder ini' : '-');
-        $lok = (!empty($d['latitude']) && !empty($d['longitude'])) ? " (Lat: {$d['latitude']}, Lng: {$d['longitude']})" : '';
+        $lok_xml = '';
+        if (!empty($d['latitude']) && !empty($d['longitude'])) {
+            $lok_xml = '<w:br/><w:t xml:space="preserve">(Lat: ' . htmlspecialchars($d['latitude'], ENT_XML1, 'UTF-8') . ')</w:t><w:br/><w:t xml:space="preserve">(Lng: ' . htmlspecialchars($d['longitude'], ENT_XML1, 'UTF-8') . ')</w:t>';
+        }
         $tgl = (!empty($d['tanggal_upload']) ? date('d M Y H:i', strtotime($d['tanggal_upload'])) : '-');
         $judul = htmlspecialchars(!empty($d['judul_dokumen']) ? $d['judul_dokumen'] : 'Tanpa Judul', ENT_XML1, 'UTF-8');
         $dok_ket = htmlspecialchars(!empty($d['keterangan']) ? $d['keterangan'] : '-', ENT_XML1, 'UTF-8');
 
         $rows_xml .= '
         <w:tr w:rsidR="00000000">
-            <w:tc><w:tcPr><w:tcW w:w="700" w:type="dxa"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>' . $no++ . '</w:t></w:r></w:p></w:tc>
-            <w:tc><w:tcPr><w:tcW w:w="2400" w:type="dxa"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>' . $judul . '</w:t></w:r></w:p></w:tc>
-            <w:tc><w:tcPr><w:tcW w:w="1200" w:type="dxa"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>' . $dok_ket . '</w:t></w:r></w:p></w:tc>
-            <w:tc><w:tcPr><w:tcW w:w="2000" w:type="dxa"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>' . $tgl . '</w:t></w:r></w:p></w:tc>
-            <w:tc><w:tcPr><w:tcW w:w="2000" w:type="dxa"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>' . htmlspecialchars($kat . $lok, ENT_XML1, 'UTF-8') . '</w:t></w:r></w:p></w:tc>
-            <w:tc><w:tcPr><w:tcW w:w="2700" w:type="dxa"/></w:tcPr>' . $att_xml . '</w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="600" w:type="dxa"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>' . $no++ . '</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2500" w:type="dxa"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>' . $judul . '</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2500" w:type="dxa"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>' . $dok_ket . '</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2000" w:type="dxa"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>' . $tgl . '</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2500" w:type="dxa"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>' . $kat . '</w:t>' . $lok_xml . '</w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="3500" w:type="dxa"/></w:tcPr>' . $att_xml . '</w:tc>
         </w:tr>';
     }
 } else {
-    $rows_xml .= '<w:tr w:rsidR="00000000"><w:tc><w:tcPr><w:tcW w:w="11000" w:type="dxa"/><w:gridSpan w:val="6"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>Tidak ada dokumen.</w:t></w:r></w:p></w:tc></w:tr>';
+    $rows_xml .= '<w:tr w:rsidR="00000000"><w:tc><w:tcPr><w:tcW w:w="13600" w:type="dxa"/><w:gridSpan w:val="6"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>Tidak ada dokumen.</w:t></w:r></w:p></w:tc></w:tr>';
 }
 
 // --- Build document.xml ---
@@ -161,7 +164,7 @@ $document_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
     <w:tbl>
         <w:tblPr>
             <w:tblStyle w:val="TableGrid"/>
-            <w:tblW w:w="11000" w:type="dxa"/>
+            <w:tblW w:w="13600" w:type="dxa"/>
             <w:tblBorders>
                 <w:top w:val="single" w:sz="4" w:space="0" w:color="000000"/>
                 <w:left w:val="single" w:sz="4" w:space="0" w:color="000000"/>
@@ -170,28 +173,34 @@ $document_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
                 <w:insideH w:val="single" w:sz="4" w:space="0" w:color="000000"/>
                 <w:insideV w:val="single" w:sz="4" w:space="0" w:color="000000"/>
             </w:tblBorders>
+            <w:tblCellMar>
+                <w:top w:w="100" w:type="dxa"/>
+                <w:left w:w="150" w:type="dxa"/>
+                <w:bottom w:w="100" w:type="dxa"/>
+                <w:right w:w="150" w:type="dxa"/>
+            </w:tblCellMar>
             <w:tblLook w:val="04A0"/>
         </w:tblPr>
         <w:tblGrid>
-            <w:gridCol w:w="700"/>
-            <w:gridCol w:w="2400"/>
-            <w:gridCol w:w="1200"/>
+            <w:gridCol w:w="600"/>
+            <w:gridCol w:w="2500"/>
+            <w:gridCol w:w="2500"/>
             <w:gridCol w:w="2000"/>
-            <w:gridCol w:w="2000"/>
-            <w:gridCol w:w="2700"/>
+            <w:gridCol w:w="2500"/>
+            <w:gridCol w:w="3500"/>
         </w:tblGrid>
         <w:tr w:rsidR="00000000">
-            <w:tc><w:tcPr><w:tcW w:w="700" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>No</w:t></w:r></w:p></w:tc>
-            <w:tc><w:tcPr><w:tcW w:w="2400" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>Judul Dokumen</w:t></w:r></w:p></w:tc>
-            <w:tc><w:tcPr><w:tcW w:w="1200" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>Keterangan</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="600" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>No</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2500" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>Judul Dokumen</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2500" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>Keterangan</w:t></w:r></w:p></w:tc>
             <w:tc><w:tcPr><w:tcW w:w="2000" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>Tanggal</w:t></w:r></w:p></w:tc>
-            <w:tc><w:tcPr><w:tcW w:w="2000" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>Kategori</w:t></w:r></w:p></w:tc>
-            <w:tc><w:tcPr><w:tcW w:w="2700" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>File Terlampir</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="2500" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>Kategori</w:t></w:r></w:p></w:tc>
+            <w:tc><w:tcPr><w:tcW w:w="3500" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/><w:vAlign w:val="center"/></w:tcPr><w:p w:rsidR="00000000" w:rsidRDefault="00000000"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t>File Terlampir</w:t></w:r></w:p></w:tc>
         </w:tr>
         ' . $rows_xml . '
     </w:tbl>
     <w:sectPr>
-        <w:pgSz w:w="11906" w:h="16838"/>
+        <w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/>
         <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/>
     </w:sectPr>
 </w:body>
