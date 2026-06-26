@@ -11,7 +11,7 @@ $user_role = $_SESSION['user_role'];
 $folder_message = "";
 
 // Aksi Tambah Kategori
-if (isset($_POST['buat'])) {
+if (isset($_POST['buat']) && $user_role === 'admin') {
     $nama = mysqli_real_escape_string($koneksi, $_POST['nama_folder']);
     if (mysqli_query($koneksi, "INSERT INTO folders (nama_folder) VALUES ('$nama')")) {
         header("Location: folder.php?msg=created");
@@ -141,10 +141,12 @@ $folders_data = mysqli_query($koneksi, "
                         </h2>
                     </div>
                     <div class="actions-group">
+                        <?php if ($user_role === 'admin'): ?>
                         <button onclick="openBuatModal()" class="btn btn-primary" title="Tambah kategori baru">
                             <i data-feather="folder-plus" style="width:15px;height:15px;"></i>
                             Tambah Kategori Baru
                         </button>
+                        <?php endif; ?>
                     </div>
                 </div>
 
